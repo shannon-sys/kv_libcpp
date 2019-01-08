@@ -18,7 +18,10 @@ class KVImpl : public DB {
   virtual Status Write(const WriteOptions& options, WriteBatch* updates);
   virtual Status WriteNonatomic(const WriteOptions& options, WriteBatchNonatomic* updates);
   virtual Status Get(const ReadOptions& options, const Slice& key, std::string* value);
+  virtual Status IngestExternFile(char *sst_filename, int verify,
+                   std::vector<ColumnFamilyHandle*>* handles) override;
   virtual Status IngestExternFile(char *sst_filename, int verify) override;
+
   virtual const Snapshot* GetSnapshot();
   virtual Status ReleaseSnapshot(const Snapshot* snapshot);
   virtual Iterator* NewIterator(const ReadOptions&);

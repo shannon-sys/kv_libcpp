@@ -282,9 +282,21 @@ namespace shannon {
     return s;
   }
 
+  Status KVImpl::IngestExternFile(char *sst_filename, int verify,
+                   std::vector<ColumnFamilyHandle*>* handles)
+  {
+    if (handles == NULL) {
+      cerr << "handles is NULL!" <<endl;
+      cerr << "If you do not want to get column family name from sst file," <<endl;
+      cerr << "please use function: IngestExternFile(char *, int)!" <<endl;
+      return Status::Corruption("handles is NULL!\n");
+    }
+    return AnalyzeSst(sst_filename, verify, this, handles);
+  }
+
   Status KVImpl::IngestExternFile(char *sst_filename, int verify)
   {
-    return AnalyzeSst(sst_filename, verify, this);
+    return AnalyzeSst(sst_filename, verify, this, NULL);
   }
 
   const Snapshot* KVImpl::GetSnapshot() {

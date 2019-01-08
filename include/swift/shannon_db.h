@@ -73,7 +73,16 @@ class DB {
   virtual Status Get(const ReadOptions& options,
                      const Slice& key, std::string* value) = 0;
 
+  // Analyze sst file and write kv to SSD of the same column family
+  // verify: read block from sst file, then check it.
+  //   verify != 0 crc32c or xxhash check; verify = 0 do not check.
+  // handles: when you open database, you can get all handles
+  //   get cf_name from sst file, then find the same name from handles.
+  //   if there can not find cf_name, will ingest sst file fail.
+  virtual Status IngestExternFile(char *sst_filename, int verify,
+                   std::vector<ColumnFamilyHandle*>* handles) = 0;
   // Analyze sst file and write kv to SSD
+  // kvs will be writen to the column family name of "default".
   virtual Status IngestExternFile(char *sst_filename, int verify) = 0;
 
   // Return a heap-allocated iterator over the contents of the database.
