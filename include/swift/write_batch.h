@@ -24,6 +24,7 @@
 #include <string>
 #include <list>
 #include "status.h"
+#include "../../venice_kv.h"
 
 namespace shannon {
 
@@ -58,6 +59,47 @@ class WriteBatch {
 
  private:
   friend class WriteBatchInternal;
+
+  std::string rep_;  // See comment in write_batch.cc for the format of rep_
+  std::list<std::string> value_;
+
+  // Intentionally copyable
+};
+
+class WriteBatchNonatomic {
+ public:
+  WriteBatchNonatomic();
+  ~WriteBatchNonatomic();
+
+  Status Put(ColumnFamilyHandle* column_family, const Slice& key,
+          const Slice& value);
+  Status Put(ColumnFamilyHandle* column_family, const Slice& key,
+          const Slice& value, __u64 timestamp);
+  // Store the mapping "key->value" in the database.
+  Status Put(const Slice& key, const Slice& value);
+  Status Put(const Slice& key, const Slice& value, __u64 timestamp);
+
+  Status Delete(ColumnFamilyHandle* column_family, const Slice& key);
+  Status Delete(ColumnFamilyHandle* column_family, const Slice& key,
+          __u64 timestamp);
+  // If the database contains a mapping for "key", erase it.  Else do nothing.
+  Status Delete(const Slice& key);
+  Status Delete(const Slice& key, __u64 timestamp);
+
+  // Clear all updates buffered in this batch.
+  void Clear();
+
+  // Support for iterating over the contents of a batch.
+  class Handler {
+   public:
+    virtual ~Handler();
+    virtual void Put(const Slice& key, const Slice& value) = 0;
+    virtual void Delete(const Slice& key) = 0;
+  };
+  Status Iterate(Handler* handler) const;
+
+ private:
+  friend class WriteBatchInternalNonatomic;
 
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
   std::list<std::string> value_;

@@ -52,6 +52,47 @@ class WriteBatchInternal {
   static int Valid(const WriteBatch* batch);
 };
 
+class WriteBatchInternalNonatomic {
+ public:
+  // Return the number of entries in the batch.
+  static int Count(const WriteBatchNonatomic* batch);
+
+  // Set the count for the number of entries in the batch.
+  static void SetCount(WriteBatchNonatomic* batch, int n);
+
+  static void SetSize(WriteBatchNonatomic* batch, size_t n);
+
+  static void SetValueSize(WriteBatchNonatomic* batch, size_t n);
+
+  static void SetHandle(WriteBatchNonatomic* batch, int n);
+
+  static void SetFillCache(WriteBatchNonatomic* batch, int n);
+  // Return the seqeunce number for the start of this batch.
+  //static SequenceNumber Sequence(const WriteBatch* batch);
+
+  // Store the specified number as the seqeunce number for the start of
+  // this batch.
+  //static void SetSequence(WriteBatch* batch, SequenceNumber seq);
+
+  static Slice Contents(const WriteBatchNonatomic* batch) {
+    return Slice(batch->rep_);
+  }
+
+  static size_t ByteSize(const WriteBatchNonatomic* batch) {
+    return batch->rep_.size();
+  }
+
+  static size_t GetValueSize(const WriteBatchNonatomic* batch);
+
+  static void SetContents(WriteBatchNonatomic* batch, const Slice& contents);
+
+  //static Status InsertInto(const WriteBatch* batch, MemTable* memtable);
+
+  static void Append(WriteBatchNonatomic* dst, const WriteBatch* src);
+
+  static int Valid(const WriteBatchNonatomic* batch);
+};
+
 }  // namespace shannon
 
 

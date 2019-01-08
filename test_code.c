@@ -9,6 +9,7 @@ using shannon::Options;
 using shannon::Slice;
 using shannon::WriteOptions;
 using shannon::WriteBatch;
+using shannon::WriteBatchNonatomic;
 using shannon::ReadOptions;
 using shannon::Snapshot;
 using shannon::Iterator;
@@ -47,6 +48,15 @@ int main (int argc,char * argv[])
 	status  = db->Write(shannon::WriteOptions(), &batch);
 	assert(status.ok());
 	status = db->Get(shannon::ReadOptions(), "batch2", &value);
+	assert(status.ok());
+    std::cout << value << std::endl;
+
+	WriteBatchNonatomic batch_non;
+	batch_non.Put("batch1_nonatomic", Slice("mybatchtest_nonatomic"));
+	batch_non.Put("batch2_nonatomic", Slice("mybatchtest2_nonatomic"));
+	status  = db->WriteNonatomic(shannon::WriteOptions(), &batch_non);
+	assert(status.ok());
+	status = db->Get(shannon::ReadOptions(), "batch2_nonatomic", &value);
 	assert(status.ok());
     std::cout << value << std::endl;
 

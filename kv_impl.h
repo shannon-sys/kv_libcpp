@@ -16,6 +16,7 @@ class KVImpl : public DB {
   virtual Status Put(const WriteOptions&, const Slice& key, const Slice& value);
   virtual Status Delete(const WriteOptions&, const Slice& key);
   virtual Status Write(const WriteOptions& options, WriteBatch* updates);
+  virtual Status WriteNonatomic(const WriteOptions& options, WriteBatchNonatomic* updates);
   virtual Status Get(const ReadOptions& options, const Slice& key, std::string* value);
   virtual const Snapshot* GetSnapshot();
   virtual Status ReleaseSnapshot(const Snapshot* snapshot);

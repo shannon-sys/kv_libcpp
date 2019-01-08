@@ -196,6 +196,27 @@ namespace shannon {
     return s;
   }
 
+  Status KVImpl::WriteNonatomic(const WriteOptions& options, WriteBatchNonatomic* my_batch) {
+    Status s;
+
+    if (!WriteBatchInternalNonatomic::Valid(my_batch)) {
+      fprintf(stderr, "%s writebatch is not valid\n", __FUNCTION__);
+      return Status::Corruption();
+    }
+    WriteBatchInternalNonatomic::SetHandle(my_batch, db_);
+    if (options.fill_cache) {
+      WriteBatchInternalNonatomic::SetFillCache(my_batch, 1);
+    }
+    else {
+      WriteBatchInternalNonatomic::SetFillCache(my_batch, 0);
+    }
+    int ret = ioctl(fd_, WRITE_BATCH_NONATOMIC, WriteBatchInternalNonatomic::Contents(my_batch).data());
+    if (ret < 0) {
+      return Status::IOError(strerror(errno));
+    }
+    return s;
+  }
+
   Status KVImpl::Put(const WriteOptions& options, const Slice& key, const Slice& value) {
     return this->Put(options, default_cf_handle_, key, value);
   }
