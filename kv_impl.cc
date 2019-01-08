@@ -15,6 +15,7 @@
 #include "write_batch_internal.h"
 #include "iter.h"
 #include "swift/env.h"
+#include "table/sst_table.h"
 
 using namespace std;
 namespace shannon {
@@ -279,6 +280,11 @@ namespace shannon {
     value->assign(buf, kv.value_len);
     free(buf);
     return s;
+  }
+
+  Status KVImpl::IngestExternFile(char *sst_filename, int verify)
+  {
+    return AnalyzeSst(sst_filename, verify, this);
   }
 
   const Snapshot* KVImpl::GetSnapshot() {

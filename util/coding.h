@@ -7,8 +7,8 @@
 // * In addition we support variable length "varint" encoding
 // * Strings are encoded prefixed by their length in varint format
 
-#ifndef STORAGE_LEVELDB_UTIL_CODING_H_
-#define STORAGE_LEVELDB_UTIL_CODING_H_
+#ifndef STORAGE_SHANNONDB_INCLUDE_UTIL_CODING_H_
+#define STORAGE_SHANNONDB_INCLUDE_UTIL_CODING_H_
 
 #define PLATFORM_IS_LITTLE_ENDIAN (__BYTE_ORDER == __LITTLE_ENDIAN)
 
@@ -110,4 +110,4 @@ inline const char* GetVarint32Ptr(const char* p,
 
 }  // namespace shannon
 
-#endif  // STORAGE_LEVELDB_UTIL_CODING_H_
+#endif  // STORAGE_SHANNONDB_INCLUDE_UTIL_CODING_H_
