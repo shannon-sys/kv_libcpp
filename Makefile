@@ -9,8 +9,8 @@ ${LibName}:kv_db.o kv_impl.o status.o write_batch.o iter.o column_family.o util/
 	g++ $(CXXFLAGS) -g -fPIC --shared $^ -o $@
 	ar -rcs ${LibNameStatic} $^
 
-code_test:test_code.c
-	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -I${HEAD} -g $^ -o code_test -l${Target}
+db_test:test/db_test.c
+	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -I${HEAD} -g $^ -o $@ -l${Target}
 uninstall:
 	sudo rm -rf /usr/include/swift
 
