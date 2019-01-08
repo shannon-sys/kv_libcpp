@@ -22,9 +22,9 @@
 #define SHANNON_DB_INCLUDE_WRITE_BATCH_H_
 
 #include <string>
+#include <linux/types.h>
 #include <list>
 #include "status.h"
-#include "../../venice_kv.h"
 
 namespace shannon {
 
