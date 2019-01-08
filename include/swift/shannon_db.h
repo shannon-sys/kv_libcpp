@@ -73,6 +73,11 @@ class DB {
   virtual Status Get(const ReadOptions& options,
                      const Slice& key, std::string* value) = 0;
 
+  // on success returns kOk: exist, kNotFound: do not exist
+  // on failure returns kIOError or kCorruption
+  virtual Status KeyExist(const ReadOptions& options,
+                          const Slice& key) = 0;
+
   // Analyze sst file and write kv to SSD of the same column family
   // verify: read block from sst file, then check it.
   //   verify != 0 crc32c or xxhash check; verify = 0 do not check.
@@ -134,6 +139,9 @@ class DB {
   virtual Status Get(const ReadOptions& options,
 			ColumnFamilyHandle* column_family, const Slice& key,
 			std::string *value) = 0;
+
+  virtual Status KeyExist(const ReadOptions& options,
+			ColumnFamilyHandle* column_family, const Slice& key) = 0;
 
   virtual Iterator* NewIterator(const ReadOptions& options,
 				ColumnFamilyHandle* column_family) = 0;

@@ -80,6 +80,17 @@ struct venice_kv {
 	char pad[12];
 };
 
+struct uapi_key_status {
+	__u64 timestamp;
+	int db;
+	int cf_index;
+	int key_len;
+	int value_len;
+	int exist;
+	int reserved;
+	const char *key;
+};
+
 struct kv_cache_size {
 	int db;
 	int cf_index;

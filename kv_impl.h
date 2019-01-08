@@ -18,6 +18,7 @@ class KVImpl : public DB {
   virtual Status Write(const WriteOptions& options, WriteBatch* updates);
   virtual Status WriteNonatomic(const WriteOptions& options, WriteBatchNonatomic* updates);
   virtual Status Get(const ReadOptions& options, const Slice& key, std::string* value);
+  virtual Status KeyExist(const ReadOptions& options, const Slice& key);
   virtual Status IngestExternFile(char *sst_filename, int verify,
                    std::vector<ColumnFamilyHandle*>* handles) override;
   virtual Status IngestExternFile(char *sst_filename, int verify) override;
@@ -47,6 +48,8 @@ class KVImpl : public DB {
   virtual Status Get(const ReadOptions& options,
 		ColumnFamilyHandle* column_family, const Slice& key,
 		std::string* value) override;
+  virtual Status KeyExist(const ReadOptions& options,
+		ColumnFamilyHandle* column_family, const Slice& key) override;
   virtual Iterator* NewIterator(const ReadOptions& options,
 		ColumnFamilyHandle* column_family) override;
   virtual Status NewIterators(const ReadOptions& options,

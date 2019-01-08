@@ -44,6 +44,7 @@ enum {
 	RELEASE_CHECKPOINT_CMD,
 	CHECKPOINT_LIST_CMD,
 	WRITE_BATCH_NONATOMIC_CMD,
+	KEY_STATUS_CMD,
 };
 
 
@@ -92,4 +93,5 @@ enum {
 #define IOCTL_ITERATOR_GET     _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_GET_CMD, struct kvdb_iter_get_option)
 
 #define IOCTL_DB_STATUS        _IOWR(VENICE_KV_IOCTL_FLAGS, DB_STATUS_CMD, struct kv_db_status)
+#define IOCTL_KEY_STATUS       _IOWR(VENICE_KV_IOCTL_FLAGS, KEY_STATUS_CMD, struct uapi_key_status)
 #endif /* end of __VENICE_IOCTL__ */

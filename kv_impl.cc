@@ -282,6 +282,34 @@ namespace shannon {
     return s;
   }
 
+  Status KVImpl::KeyExist(const ReadOptions& options, const Slice& key) {
+    return this->KeyExist(options, default_cf_handle_, key);
+  }
+
+  Status KVImpl::KeyExist(const ReadOptions& options,
+                ColumnFamilyHandle* column_family, const Slice& key) {
+    Status s;
+    struct uapi_key_status status;
+
+    if (key.size() > MAX_KEY_SIZE)
+      return Status::Corruption("the length of key is invalid !!!");
+    memset(&status, 0, sizeof(struct uapi_key_status));
+
+    status.db = db_;
+    status.cf_index =
+        (reinterpret_cast<const ColumnFamilyHandle* >(column_family))->GetID();
+    status.key = (char *)key.data();
+    status.key_len = key.size();
+    status.timestamp = options.snapshot != NULL
+        ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0;
+    int ret = ioctl(fd_, IOCTL_KEY_STATUS, &status);
+    if (ret < 0)
+      return Status::IOError(key.data());
+    if (status.exist == 0)
+      return Status::NotFound(key.data());
+    return s;
+  }
+
   Status KVImpl::IngestExternFile(char *sst_filename, int verify,
                    std::vector<ColumnFamilyHandle*>* handles)
   {
