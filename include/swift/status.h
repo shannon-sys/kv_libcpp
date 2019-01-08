@@ -59,7 +59,8 @@ class Status {
     kBusy = 11,
     kExpired = 12,
     kTryAgain = 13,
-    kCompactionTooLarge = 14
+    kCompactionTooLarge = 14,
+    kBatchFull = 15
   };
 
   Code code() const { return code_; }
@@ -184,6 +185,14 @@ class Status {
     return Status(kCompactionTooLarge, msg, msg2);
   }
 
+  static Status BatchFull(SubCode msg = kNone) {
+    return Status(kBatchFull, msg);
+  }
+  static Status BatchFull(const Slice& msg,
+                                   const Slice& msg2 = Slice()) {
+    return Status(kBatchFull, msg, msg2);
+  }
+
   static Status NoSpace() { return Status(kIOError, kNoSpace); }
   static Status NoSpace(const Slice& msg, const Slice& msg2 = Slice()) {
     return Status(kIOError, kNoSpace, msg, msg2);
@@ -250,6 +259,9 @@ class Status {
 
   // Returns true iff the status indicates the proposed compaction is too large
   bool IsCompactionTooLarge() const { return code() == kCompactionTooLarge; }
+
+  // Returns true iff the status indicates the write batch is full
+  bool IsBatchFull() const { return code() == kBatchFull; }
 
   // Returns true iff the status indicates a NoSpace error
   // This is caused by an I/O error returning the specific "out of space"

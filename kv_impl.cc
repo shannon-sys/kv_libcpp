@@ -178,6 +178,10 @@ namespace shannon {
   Status KVImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
     Status s;
 
+    if (!WriteBatchInternal::Valid(my_batch)) {
+      fprintf(stderr, "%s writebatch is not valid\n", __FUNCTION__);
+      return Status::Corruption();
+    }
     WriteBatchInternal::SetHandle(my_batch, db_);
     if (options.fill_cache) {
       WriteBatchInternal::SetFillCache(my_batch, 1);
@@ -197,7 +201,7 @@ namespace shannon {
   }
 
   Status KVImpl::Put(const WriteOptions& options, ColumnFamilyHandle* column_family,
-		const Slice& key, const Slice& value) {
+                const Slice& key, const Slice& value) {
     Status s;
     struct venice_kv kv;
 
@@ -225,7 +229,7 @@ namespace shannon {
   }
 
   Status KVImpl::Get(const ReadOptions& options, ColumnFamilyHandle* column_family,
-	const Slice& key, std::string* value) {
+                const Slice& key, std::string* value) {
     Status s;
     struct venice_kv kv;
     char *buf;

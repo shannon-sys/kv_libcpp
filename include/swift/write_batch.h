@@ -35,14 +35,14 @@ class WriteBatch {
   WriteBatch();
   ~WriteBatch();
 
-  void Put(ColumnFamilyHandle* column_family, const Slice& key,
+  Status Put(ColumnFamilyHandle* column_family, const Slice& key,
           const Slice& value);
   // Store the mapping "key->value" in the database.
-  void Put(const Slice& key, const Slice& value);
+  Status Put(const Slice& key, const Slice& value);
 
-  void Delete(ColumnFamilyHandle* column_family, const Slice& key);
+  Status Delete(ColumnFamilyHandle* column_family, const Slice& key);
   // If the database contains a mapping for "key", erase it.  Else do nothing.
-  void Delete(const Slice& key);
+  Status Delete(const Slice& key);
 
   // Clear all updates buffered in this batch.
   void Clear();

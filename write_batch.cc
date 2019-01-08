@@ -46,7 +46,7 @@ Status WriteBatch::Iterate(Handler* handler) const {
     found++;
     struct batch_cmd *cmd = (struct batch_cmd *)input.data();
     if (cmd->watermark != CMD_START_MARK)
-	return Status::Corruption("bad cmd start mark");
+      return Status::Corruption("bad cmd start mark");
     switch (cmd->cmd_type) {
       case kTypeValue:
         key = Slice(cmd->key, cmd->key_len);
@@ -54,7 +54,7 @@ Status WriteBatch::Iterate(Handler* handler) const {
         handler->Put(key, value);
         break;
       case kTypeDeletion:
-	key = Slice(cmd->key, cmd->key_len);
+        key = Slice(cmd->key, cmd->key_len);
         handler->Delete(key);
         break;
       default:
@@ -82,8 +82,12 @@ void WriteBatchInternal::SetSize(WriteBatch* b, size_t n) {
 }
 
 void WriteBatchInternal::SetValueSize(WriteBatch* b, size_t n) {
-	size_t value_size = DecodeFixed64(b->rep_.data() + OFFSET(write_batch_header, value_size));
+  size_t value_size = DecodeFixed64(b->rep_.data() + OFFSET(write_batch_header, value_size));
   EncodeFixed64(&b->rep_[OFFSET(write_batch_header, value_size)], n + value_size);
+}
+
+size_t WriteBatchInternal::GetValueSize(const WriteBatch* b) {
+       return (size_t)DecodeFixed64(b->rep_.data() + OFFSET(write_batch_header, value_size));
 }
 
 void WriteBatchInternal::SetHandle(WriteBatch* b, int n) {
@@ -94,8 +98,29 @@ void WriteBatchInternal::SetFillCache(WriteBatch* b, int n) {
   EncodeFixed32(&b->rep_[OFFSET(write_batch_header, fill_cache)], n);
 }
 
-void WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
+int WriteBatchInternal::Valid(const WriteBatch* batch) {
+  size_t value_size = WriteBatchInternal::GetValueSize(batch);
+  size_t byte_size = WriteBatchInternal::ByteSize(batch);
+  int count = WriteBatchInternal::Count(batch);
+  if ((byte_size <= sizeof(struct write_batch_header)) || (value_size < 0) ||
+      (byte_size + value_size > MAX_BATCH_SIZE) ||
+      (count > MAX_BATCH_COUNT) || (count <= 0))
+    return 0;
+  else
+    return 1;
+}
+
+Status WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
         const Slice& value) {
+    size_t value_size = WriteBatchInternal::GetValueSize(this);
+    size_t byte_size = WriteBatchInternal::ByteSize(this);
+    int count = WriteBatchInternal::Count(this);
+    if (column_family == NULL || key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
+        return Status::Corruption("format error: key , value or column family.");
+    if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
+        (count >= MAX_BATCH_COUNT)) {
+        return Status::BatchFull();
+    }
     WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);
     PutFixed64(&rep_, static_cast<uint64_t>(CMD_START_MARK));
     PutFixed64(&rep_, static_cast<uint64_t>(0));
@@ -109,9 +134,19 @@ void WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
     PutSliceData(&rep_, key);
     WriteBatchInternal::SetSize(this, WriteBatchInternal::ByteSize(this));
     WriteBatchInternal::SetValueSize(this, value.size());
+    return Status::OK();
 }
 
-void WriteBatch::Put(const Slice& key, const Slice& value) {
+Status WriteBatch::Put(const Slice& key, const Slice& value) {
+  size_t value_size = WriteBatchInternal::GetValueSize(this);
+  size_t byte_size = WriteBatchInternal::ByteSize(this);
+  int count = WriteBatchInternal::Count(this);
+  if (key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
+    return Status::Corruption("format error: key , value or column family.");
+  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
+      (count >= MAX_BATCH_COUNT)) {
+    return Status::BatchFull();
+  }
   WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);
   PutFixed64(&rep_, static_cast<uint64_t>(CMD_START_MARK));
   PutFixed64(&rep_, static_cast<uint64_t>(0));
@@ -124,9 +159,19 @@ void WriteBatch::Put(const Slice& key, const Slice& value) {
   PutSliceData(&rep_, key);
   WriteBatchInternal::SetSize(this, WriteBatchInternal::ByteSize(this));
   WriteBatchInternal::SetValueSize(this, value.size());
+  return Status::OK();
 }
 
-void WriteBatch::Delete(ColumnFamilyHandle* column_family, const Slice& key) {
+Status WriteBatch::Delete(ColumnFamilyHandle* column_family, const Slice& key) {
+  size_t value_size = WriteBatchInternal::GetValueSize(this);
+  size_t byte_size = WriteBatchInternal::ByteSize(this);
+  int count = WriteBatchInternal::Count(this);
+  if (column_family == NULL || key.data() == NULL || key.size() <= 0)
+    return Status::Corruption("format error: key or column family.");
+  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() > MAX_BATCH_SIZE) ||
+      (count >= MAX_BATCH_COUNT)) {
+    return Status::BatchFull();
+  }
   WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);
   PutFixed64(&rep_, static_cast<uint64_t>(CMD_START_MARK));
   PutFixed64(&rep_, static_cast<uint64_t>(0));
@@ -138,9 +183,19 @@ void WriteBatch::Delete(ColumnFamilyHandle* column_family, const Slice& key) {
   PutFixedAlign(&rep_, 0);
   PutSliceData(&rep_, key);
   WriteBatchInternal::SetSize(this, WriteBatchInternal::ByteSize(this));
+  return Status::OK();
 }
 
-void WriteBatch::Delete(const Slice& key) {
+Status WriteBatch::Delete(const Slice& key) {
+  size_t value_size = WriteBatchInternal::GetValueSize(this);
+  size_t byte_size = WriteBatchInternal::ByteSize(this);
+  int count = WriteBatchInternal::Count(this);
+  if (key.data() == NULL || key.size() <= 0)
+    return Status::Corruption("format error: key or column family.");
+  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() > MAX_BATCH_SIZE) ||
+      (count >= MAX_BATCH_COUNT)) {
+    return Status::BatchFull();
+  }
   WriteBatchInternal::SetCount(this, WriteBatchInternal::Count(this) + 1);
   PutFixed64(&rep_, static_cast<uint64_t>(CMD_START_MARK));
   PutFixed64(&rep_, static_cast<uint64_t>(0));
@@ -151,6 +206,7 @@ void WriteBatch::Delete(const Slice& key) {
   PutFixedAlign(&rep_, 0);
   PutSliceData(&rep_, key);
   WriteBatchInternal::SetSize(this, WriteBatchInternal::ByteSize(this));
+  return Status::OK();
 }
 
 }
