@@ -30,10 +30,10 @@
 //#include "util/string_util.h"
 
 namespace shannon {
-    TableFactory* NewBlockBasedTableFactory(
-            const BlockBasedTableOptions& _table_options) {
-        return NULL;
-    }
+  TableFactory* NewBlockBasedTableFactory(
+          const BlockBasedTableOptions& _table_options) {
+      return NULL;
+  }
 #ifndef SHANNONDB_LITE
 namespace {
 

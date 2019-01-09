@@ -131,4 +131,4 @@ class LRUCache : public ShardedCache {
   int num_shards_ = 0;
 };
 
-}	// namespace shannon
+} // namespace shannon

@@ -38,9 +38,9 @@ class DB {
 
   // Open ColumnFamily Interface
   static Status Open(const DBOptions& db_options,
-		const std::string& name, const std::string& device,
-		const std::vector<ColumnFamilyDescriptor>& column_families,
-		std::vector<ColumnFamilyHandle*>* handles, DB** dbptr);
+            const std::string& name, const std::string& device,
+            const std::vector<ColumnFamilyDescriptor>& column_families,
+            std::vector<ColumnFamilyHandle*>* handles, DB** dbptr);
   DB() { }
   virtual ~DB();
 
@@ -61,7 +61,8 @@ class DB {
   // Returns OK on success, non-OK on failure.
   // Note: consider setting options.sync = true.
   virtual Status Write(const WriteOptions& options, WriteBatch* updates) = 0;
-  virtual Status WriteNonatomic(const WriteOptions& options, WriteBatchNonatomic* updates) = 0;
+  virtual Status WriteNonatomic(const WriteOptions& options,
+                                WriteBatchNonatomic* updates) = 0;
 
   // If the database contains an entry for "key" store the
   // corresponding value in *value and return OK.
@@ -110,46 +111,45 @@ class DB {
 
   //ColumnFamily Interface
   virtual Status CreateColumnFamily(const ColumnFamilyOptions& options,
-				const std::string& column_family_name,
-				ColumnFamilyHandle** handle) = 0;
+               const std::string& column_family_name,
+               ColumnFamilyHandle** handle) = 0;
 
   virtual Status CreateColumnFamilies(const ColumnFamilyOptions& options,
-			const std::vector<std::string>& column_family_names,
-			std::vector<ColumnFamilyHandle*>* handles) = 0;
+               const std::vector<std::string>& column_family_names,
+               std::vector<ColumnFamilyHandle*>* handles) = 0;
 
   virtual Status CreateColumnFamilies(
-		const std::vector<ColumnFamilyDescriptor>& column_families,
-		std::vector<ColumnFamilyHandle*>* handles) = 0;
+               const std::vector<ColumnFamilyDescriptor>& column_families,
+               std::vector<ColumnFamilyHandle*>* handles) = 0;
 
   virtual Status DropColumnFamily(ColumnFamilyHandle* column_family) = 0;
 
   virtual Status DropColumnFamilies(
-		const std::vector<ColumnFamilyHandle*>& column_families) = 0;
+               const std::vector<ColumnFamilyHandle*>& column_families) = 0;
 
   virtual Status DestroyColumnFamilyHandle(ColumnFamilyHandle* column_family) = 0;
 
   virtual Status Put(const WriteOptions& options,
-		     ColumnFamilyHandle* column_family, const Slice& key,
-		     const Slice& value) = 0;
+               ColumnFamilyHandle* column_family, const Slice& key,
+               const Slice& value) = 0;
 
   virtual Status Delete(const WriteOptions& options,
-			ColumnFamilyHandle* column_family,
-			const Slice& key) = 0;
+               ColumnFamilyHandle* column_family,
+               const Slice& key) = 0;
 
   virtual Status Get(const ReadOptions& options,
-			ColumnFamilyHandle* column_family, const Slice& key,
-			std::string *value) = 0;
+               ColumnFamilyHandle* column_family, const Slice& key,
+               std::string *value) = 0;
 
   virtual Status KeyExist(const ReadOptions& options,
-			ColumnFamilyHandle* column_family, const Slice& key) = 0;
+               ColumnFamilyHandle* column_family, const Slice& key) = 0;
 
   virtual Iterator* NewIterator(const ReadOptions& options,
-				ColumnFamilyHandle* column_family) = 0;
+               ColumnFamilyHandle* column_family) = 0;
 
-  virtual Status NewIterators(
-			const ReadOptions& options,
-			const std::vector<ColumnFamilyHandle*>& column_families,
-			std::vector<Iterator*>* iterators) = 0;
+  virtual Status NewIterators(const ReadOptions& options,
+               const std::vector<ColumnFamilyHandle*>& column_families,
+               std::vector<Iterator*>* iterators) = 0;
 
   virtual ColumnFamilyHandle* DefaultColumnFamily() const = 0;
 
@@ -233,7 +233,7 @@ class DB {
   //
   // May return some other Status on an error.
   virtual Status Get(const ReadOptions& options,
-		     const Slice& key, std::string* value) = 0;
+                  const Slice& key, std::string* value) = 0;
 
   // Return a heap-allocated iterator over the contents of the database.
   // The result of NewIterator() is initially invalid (caller must
@@ -317,24 +317,24 @@ Status DestroyDB(const std::string& device, const std::string& name, const Optio
 struct ColumnFamilyOptions;
 extern const std::string kDefaultColumnFamilyName;
 struct ColumnFamilyDescriptor {
-	std::string name;
-	ColumnFamilyOptions options;
-	ColumnFamilyDescriptor()
-		: name(kDefaultColumnFamilyName), options(ColumnFamilyOptions()) {}
-	ColumnFamilyDescriptor(const std::string& _name,
-				const ColumnFamilyOptions& _options)
-		: name(_name), options(_options) {}
+  std::string name;
+  ColumnFamilyOptions options;
+  ColumnFamilyDescriptor()
+    : name(kDefaultColumnFamilyName), options(ColumnFamilyOptions()) {}
+  ColumnFamilyDescriptor(const std::string& _name,
+                         const ColumnFamilyOptions& _options)
+    : name(_name), options(_options) {}
 };
 
 class ColumnFamilyHandle {
-	public:
-		virtual ~ColumnFamilyHandle() {}
-		virtual const std::string& GetName() const = 0;
-		virtual uint32_t GetID() const = 0;
-		virtual Status GetDescriptor(ColumnFamilyDescriptor* desc) = 0;
-        virtual Status SetDescriptor(const ColumnFamilyDescriptor& desc)=0;
-		//virtual const Comparator* GetComparator() const = 0;
-        ColumnFamilyDescriptor cf_descriptor_;
+  public:
+    virtual ~ColumnFamilyHandle() {}
+    virtual const std::string& GetName() const = 0;
+    virtual uint32_t GetID() const = 0;
+    virtual Status GetDescriptor(ColumnFamilyDescriptor* desc) = 0;
+    virtual Status SetDescriptor(const ColumnFamilyDescriptor& desc)=0;
+    //virtual const Comparator* GetComparator() const = 0;
+    ColumnFamilyDescriptor cf_descriptor_;
 };
 
 static void CancelAllBackgroundWork(DB* db, bool flag){

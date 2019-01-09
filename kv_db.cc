@@ -22,7 +22,7 @@ DB::~DB() {
 }
 
 Status DB::Open(const Options& options, const std::string& dbname,
-		const std::string& device, DB** dbptr) {
+                const std::string& device, DB** dbptr) {
   *dbptr = NULL;
   DBOptions db_options(options);
   KVImpl* impl = new KVImpl(db_options, dbname, device);
@@ -37,9 +37,9 @@ Status DB::Open(const Options& options, const std::string& dbname,
 }
 
 Status DB::Open(const DBOptions& db_options,
-	const std::string& dbname, const std::string& device,
-	const std::vector<ColumnFamilyDescriptor>& column_family_descriptor,
-	std::vector<ColumnFamilyHandle*>* handles, DB** dbptr) {
+       const std::string& dbname, const std::string& device,
+       const std::vector<ColumnFamilyDescriptor>& column_family_descriptor,
+       std::vector<ColumnFamilyHandle*>* handles, DB** dbptr) {
     *dbptr = NULL;
     KVImpl* impl;
     impl = new KVImpl(Options(), dbname, device);
@@ -49,7 +49,7 @@ Status DB::Open(const DBOptions& db_options,
     } else {
       delete impl;
     }
-	return s;
+    return s;
 }
 
 Status DB::ListColumnFamilies(const DBOptions& db_options,

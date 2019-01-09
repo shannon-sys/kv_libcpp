@@ -40,7 +40,7 @@ void EncodeFloat32Sort(char *sorted_byte, float number) {
     }
 }
 void DecodeFloat32Sort(const char *sorted_byte, float *number) {
-	if (sorted_byte == NULL) {
+    if (sorted_byte == NULL) {
         return;
     }
     // is zero
@@ -389,4 +389,4 @@ bool GetLengthPrefixedSlice(Slice* input, Slice* result) {
   }
 }
 
-}  // namespace shannon
+}  // namespace leveldb

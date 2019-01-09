@@ -152,7 +152,7 @@ namespace shannon {
   }
 
   Status KVImpl::Delete(const WriteOptions& options,
-		ColumnFamilyHandle* column_family, const Slice& key) {
+           ColumnFamilyHandle* column_family, const Slice& key) {
     Status s;
     struct venice_kv kv;
     int ret;
@@ -361,7 +361,7 @@ namespace shannon {
   }
 
   Iterator* KVImpl::NewIterator(const ReadOptions& options,
-				ColumnFamilyHandle* column_family) {
+                      ColumnFamilyHandle* column_family) {
     struct kvdb_iterator *iter = NULL;
     int ret = 0;
 
@@ -394,8 +394,8 @@ namespace shannon {
   }
 
   Status KVImpl::NewIterators(const ReadOptions& options,
-		const std::vector<ColumnFamilyHandle*>& column_families,
-		std::vector<Iterator*>* iterators) {
+                 const std::vector<ColumnFamilyHandle*>& column_families,
+                 std::vector<Iterator*>* iterators) {
     Status s;
     int ret;
     struct kvdb_iterator *iter = NULL;
@@ -443,8 +443,8 @@ namespace shannon {
   }
 
   Status KVImpl::CreateColumnFamily(const ColumnFamilyOptions& options,
-				const std::string& column_family_name,
-				ColumnFamilyHandle** handle) {
+                 const std::string& column_family_name,
+                 ColumnFamilyHandle** handle) {
     Status s;
     struct cf_handle cfhandle;
     int ret;
@@ -468,8 +468,8 @@ namespace shannon {
   }
 
   Status KVImpl::CreateColumnFamilies(const ColumnFamilyOptions& options,
-				const std::vector<std::string>& column_family_names,
-				std::vector<ColumnFamilyHandle*>* handles) {
+                 const std::vector<std::string>& column_family_names,
+                 std::vector<ColumnFamilyHandle*>* handles) {
     Status s;
 
     if (handles == NULL) {
@@ -489,7 +489,7 @@ namespace shannon {
   }
 
   Status KVImpl::CreateColumnFamilies(const std::vector<ColumnFamilyDescriptor>& column_families,
-				std::vector<ColumnFamilyHandle*>* handles) {
+                 std::vector<ColumnFamilyHandle*>* handles) {
     Status s;
 
     if (handles == NULL) {

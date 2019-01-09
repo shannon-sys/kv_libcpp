@@ -5,10 +5,11 @@
 #include "venice_kv.h"
 
 #define OFFSET(Type, member) (size_t)&( ((Type*)0)->member)
-#define PutFixedAlign(des, src)	if (sizeof(size_t) == 4) \
-					PutFixed32(des, (size_t) (src));\
-				else if (sizeof(size_t) == 8) \
-					PutFixed64(des, (size_t) (src));
+#define PutFixedAlign(des, src)               \
+          if (sizeof(size_t) == 4)            \
+            PutFixed32(des, (size_t) (src));  \
+          else if (sizeof(size_t) == 8)       \
+            PutFixed64(des, (size_t) (src));
 
 namespace shannon {
 

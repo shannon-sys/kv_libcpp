@@ -77,141 +77,141 @@ namespace shannon {
                     uint64_t *file_mtime) override {
                 return Status();
             }
-	        virtual Status RenameFile(const std::string& s, const std::string& t) override {
+            virtual Status RenameFile(const std::string& s, const std::string& t) override {
                 return Status();
-	        }
-	        virtual Status LinkFile(const std::string& s, const std::string& t) override {
-	            return Status();
-	        }
+            }
+            virtual Status LinkFile(const std::string& s, const std::string& t) override {
+                return Status();
+            }
 
-	        virtual Status NumFileLinks(const std::string& fname, uint64_t* count) override {
-	            return Status();
-	        }
+            virtual Status NumFileLinks(const std::string& fname, uint64_t* count) override {
+                return Status();
+            }
 
-	        virtual Status AreFilesSame(const std::string& first, const std::string& second,
-		                      bool* res) override {
-	            return Status();
-	        }
+            virtual Status AreFilesSame(const std::string& first, const std::string& second,
+                               bool* res) override {
+                return Status();
+            }
 
-	        virtual Status LockFile(const std::string& f, FileLock** l) override {
-	            return Status();
-	        }
+            virtual Status LockFile(const std::string& f, FileLock** l) override {
+                return Status();
+            }
 
-	        virtual Status UnlockFile(FileLock* l) override { return Status(); }
+            virtual Status UnlockFile(FileLock* l) override { return Status(); }
 
-	        virtual void Schedule(void (*f)(void* arg), void* a, Priority pri,
-		                void* tag = nullptr, void (*u)(void* arg) = nullptr) override {
-	        }
+            virtual void Schedule(void (*f)(void* arg), void* a, Priority pri,
+                        void* tag = nullptr, void (*u)(void* arg) = nullptr) override {
+            }
 
-	        virtual int UnSchedule(void* tag, Priority pri) override {
-	            return 0;
-	        }
+            virtual int UnSchedule(void* tag, Priority pri) override {
+                return 0;
+            }
 
-	        virtual void StartThread(void (*f)(void*), void* a) override {
-	        }
-	        virtual void WaitForJoin() override { }
-	        unsigned int GetThreadPoolQueueLen(Priority pri = LOW) const override {
-	            return 0;
-	        }
-	        virtual Status GetTestDirectory(std::string* path) override {
-	            return Status();
-	        }
-	        virtual Status NewLogger(const std::string& fname,
-		                    shared_ptr<Logger>* result) override {
-	            return Status();
-	        }
-	        virtual uint64_t NowMicros() override { return 0; }
-	        virtual uint64_t NowNanos() override { return 0; }
+            virtual void StartThread(void (*f)(void*), void* a) override {
+            }
+            virtual void WaitForJoin() override { }
+            unsigned int GetThreadPoolQueueLen(Priority pri = LOW) const override {
+                return 0;
+            }
+            virtual Status GetTestDirectory(std::string* path) override {
+                return Status();
+            }
+            virtual Status NewLogger(const std::string& fname,
+                            shared_ptr<Logger>* result) override {
+                return Status();
+            }
+            virtual uint64_t NowMicros() override { return 0; }
+            virtual uint64_t NowNanos() override { return 0; }
 
-	        virtual void SleepForMicroseconds(int micros) override {
-	        }
-	        virtual Status GetHostName(char* name, uint64_t len) override {
-	            return Status();
-	        }
-	        virtual Status GetCurrentTime(int64_t* unix_time) override {
+            virtual void SleepForMicroseconds(int micros) override {
+            }
+            virtual Status GetHostName(char* name, uint64_t len) override {
+                return Status();
+            }
+            virtual Status GetCurrentTime(int64_t* unix_time) override {
                 if (unix_time == NULL)
                     return Status::InvalidArgument("unix_time is not null!");
                 struct timeval tv;
                 gettimeofday(&tv, NULL);
                 //*unix_time = tv.tv_sec * 1000000 + tv.tv_usec;
                 *unix_time = tv.tv_sec;
-	            return Status();
-	        }
-	        virtual Status GetAbsolutePath(const std::string& db_path,
-		                         std::string* output_path) override {
-	            return Status();
-	        }
-	        virtual void SetBackgroundThreads(int num, Priority pri) override {
-	        }
-	        virtual int GetBackgroundThreads(Priority pri) override {
-	            return 0;
-	        }
+                return Status();
+            }
+            virtual Status GetAbsolutePath(const std::string& db_path,
+                             std::string* output_path) override {
+                return Status();
+            }
+            virtual void SetBackgroundThreads(int num, Priority pri) override {
+            }
+            virtual int GetBackgroundThreads(Priority pri) override {
+                return 0;
+            }
 
-	        virtual Status SetAllowNonOwnerAccess(bool allow_non_owner_access) override {
-	            return Status();
-	        }
+            virtual Status SetAllowNonOwnerAccess(bool allow_non_owner_access) override {
+                return Status();
+            }
 
-	        virtual void IncBackgroundThreadsIfNeeded(int num, Priority pri) override {
-	        }
+            virtual void IncBackgroundThreadsIfNeeded(int num, Priority pri) override {
+            }
 
-	        virtual void LowerThreadPoolIOPriority(Priority pool = LOW) override {
-	        }
+            virtual void LowerThreadPoolIOPriority(Priority pool = LOW) override {
+            }
 
-	        virtual void LowerThreadPoolCPUPriority(Priority pool = LOW) override {
-	        }
+            virtual void LowerThreadPoolCPUPriority(Priority pool = LOW) override {
+            }
 
-	        virtual std::string TimeToString(uint64_t time) override {
+            virtual std::string TimeToString(uint64_t time) override {
                 char buffer[32];
                 sprintf(buffer, "%lu", time);
-	            return string(buffer);
-	        }
+                return string(buffer);
+            }
 
-	        virtual Status GetThreadList(std::vector<ThreadStatus>* thread_list) override {
-	            return Status();
-	        }
+            virtual Status GetThreadList(std::vector<ThreadStatus>* thread_list) override {
+                return Status();
+            }
 
-	        virtual ThreadStatusUpdater* GetThreadStatusUpdater() const override {
-	            return NULL;
-	        }
+            virtual ThreadStatusUpdater* GetThreadStatusUpdater() const override {
+                return NULL;
+            }
 
-	        virtual uint64_t GetThreadID() const override {
-	            return 0;
-	        }
+            virtual uint64_t GetThreadID() const override {
+                return 0;
+            }
 
-	        virtual std::string GenerateUniqueId() override {
-	            return std::string("0");
-	        }
+            virtual std::string GenerateUniqueId() override {
+                return std::string("0");
+            }
 
-	        virtual EnvOptions OptimizeForLogRead(const EnvOptions& env_options) const override {
-	            return env_options;
-	        }
+            virtual EnvOptions OptimizeForLogRead(const EnvOptions& env_options) const override {
+                return env_options;
+            }
 
-	        virtual EnvOptions OptimizeForManifestRead(
-	            const EnvOptions& env_options) const override {
-	            return env_options;
-	        }
+            virtual EnvOptions OptimizeForManifestRead(
+                const EnvOptions& env_options) const override {
+                return env_options;
+            }
 
-	        virtual EnvOptions OptimizeForLogWrite(const EnvOptions& env_options,
-		                         const DBOptions& db_options) const override {
-	            return env_options;
-	        }
+            virtual EnvOptions OptimizeForLogWrite(const EnvOptions& env_options,
+                             const DBOptions& db_options) const override {
+                return env_options;
+            }
 
-	        virtual EnvOptions OptimizeForManifestWrite(
-	            const EnvOptions& env_options) const override {
-	            return env_options;
-	        }
+            virtual EnvOptions OptimizeForManifestWrite(
+                const EnvOptions& env_options) const override {
+                return env_options;
+            }
 
-	        virtual EnvOptions OptimizeForCompactionTableWrite(
-	            const EnvOptions& env_options,
-	            const ImmutableDBOptions& immutable_ops) const override {
-	            return env_options;
-	        }
+            virtual EnvOptions OptimizeForCompactionTableWrite(
+                const EnvOptions& env_options,
+                const ImmutableDBOptions& immutable_ops) const override {
+                return env_options;
+            }
 
-	        virtual EnvOptions OptimizeForCompactionTableRead(
-	            const EnvOptions& env_options,
-	            const ImmutableDBOptions& db_options) const override {
-	            return env_options;
-	        }
+            virtual EnvOptions OptimizeForCompactionTableRead(
+                const EnvOptions& env_options,
+                const ImmutableDBOptions& db_options) const override {
+                return env_options;
+            }
     };
 
     std::string Env::GenerateUniqueId() {

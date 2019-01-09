@@ -48,109 +48,109 @@ struct TableFactory {
 };
 
 struct BlockBasedTableOptions {
-    bool cache_index_and_filter_blocks = false;
+  bool cache_index_and_filter_blocks = false;
 
-    // If cache_index_and_filter_blocks is enabled, cache index and filter
-    // blocks with gith priority. If set to true, depending on implementation of
-    // block cache, index and filter blocks may be less likely to be evicted
-    // than data blocks.
-    bool cache_index_and_filter_blocks_with_high_priority = false;
+  // If cache_index_and_filter_blocks is enabled, cache index and filter
+  // blocks with gith priority. If set to true, depending on implementation of
+  // block cache, index and filter blocks may be less likely to be evicted
+  // than data blocks.
+  bool cache_index_and_filter_blocks_with_high_priority = false;
 
-    // The index type that will be used for this table.
-    enum IndexType : char {
-        // A space efficient index block that is optimized for
-        // binary-search-based index.
-        kBinarySearch,
+  // The index type that will be used for this table.
+  enum IndexType : char {
+    // A space efficient index block that is optimized for
+    // binary-search-based index.
+    kBinarySearch,
 
-        // The hash index, if enabled, will do the hash lookup when
-        // Options prefix_extractor is provided.
-        kHashSearch,
+    // The hash index, if enabled, will do the hash lookup when
+    // Options prefix_extractor is provided.
+    kHashSearch,
 
-        // A two-level index implementation. Both levels are binary search indexes.
-        kTwoLevelIndexSearch,
-    };
+    // A two-level index implementation. Both levels are binary search indexes.
+    kTwoLevelIndexSearch,
+  };
 
-    IndexType index_type = kBinarySearch;
+  IndexType index_type = kBinarySearch;
 
-    // This option is now deprecated. No matter what value it is st to,
-    // it will behave as if hash_index_allow_collision = true.
-    bool hash_index_allow_collision = true;
+  // This option is now deprecated. No matter what value it is st to,
+  // it will behave as if hash_index_allow_collision = true.
+  bool hash_index_allow_collision = true;
 
-    // Use the specified checksum type. Newly created table files will be
-    // protected with this checksum type. Old tale files will still be readable,
-    // even though they have different checksum type.
-    // CheckSumType checkSUM = KCRC32c;
+  // Use the specified checksum type. Newly created table files will be
+  // protected with this checksum type. Old tale files will still be readable,
+  // even though they have different checksum type.
+  // CheckSumType checkSUM = KCRC32c;
 
-    // Disable block cache, If this is set to true,
-    // then no block cache should be used, and the block_cache should
-    // point to a nullptr object.
-    bool no_block_cache = false;
+  // Disable block cache, If this is set to true,
+  // then no block cache should be used, and the block_cache should
+  // point to a nullptr object.
+  bool no_block_cache = false;
 
-    // If non-NULL use the specified cache for blocks.
-    // If NULL, rocksdb will automatically create and use an 8MB internal cache.
-    std::shared_ptr<Cache> block_cache = nullptr;
+  // If non-NULL use the specified cache for blocks.
+  // If NULL, rocksdb will automatically create and use an 8MB internal cache.
+  std::shared_ptr<Cache> block_cache = nullptr;
 
-    // If non-NULL use the specified cache for pages read from device
-    // IF NULL, no page cache is used
-    //
-    // Approximate size of user data packed per block. Note that the
-    // block size specified here corresponds to uncompressed data. The
-    // actual size of the unit read from disk may be smaller if
-    // compression is enabled. This parameter can be changed dynamically.
-    size_t block_size = 4 * 1024;
+  // If non-NULL use the specified cache for pages read from device
+  // IF NULL, no page cache is used
+  //
+  // Approximate size of user data packed per block. Note that the
+  // block size specified here corresponds to uncompressed data. The
+  // actual size of the unit read from disk may be smaller if
+  // compression is enabled. This parameter can be changed dynamically.
+  size_t block_size = 4 * 1024;
 
-    // This is used to close a block before it reaches the configured
-    // 'block_size'. If the percentage of free space in the current block is less
-    // than this specified number and adding a new record to the block will
-    // exceed the configured block size, then this block will be closed and the
-    // new record will be written to the next block.
-    int block_size_deviation = 10;
+  // This is used to close a block before it reaches the configured
+  // 'block_size'. If the percentage of free space in the current block is less
+  // than this specified number and adding a new record to the block will
+  // exceed the configured block size, then this block will be closed and the
+  // new record will be written to the next block.
+  int block_size_deviation = 10;
 
-    // Number of keys between restart points for delta encoding of keys.
-    // This parameter can be changed dynamically. Most clients should
-    // leave this parameter alonee. The minimum value allowed is 1. Any smaller
-    // value will be sliently overwritten with 1
-    int block_restart_interval = 16;
+  // Number of keys between restart points for delta encoding of keys.
+  // This parameter can be changed dynamically. Most clients should
+  // leave this parameter alonee. The minimum value allowed is 1. Any smaller
+  // value will be sliently overwritten with 1
+  int block_restart_interval = 16;
 
-    // Same as block_restart interval but used for the index block.
-    int index_block_restart_interval = 1;
+  // Same as block_restart interval but used for the index block.
+  int index_block_restart_interval = 1;
 
-    // Block size for partitioned metadata. Currently applied to indexes when
-    // kTwoLevelIndexSearch is used and to filters when partition_filters is used
-    // Note: Since in the current implementation the filters and index partitions
-    // are aligned, and index/filter block is created when either index or filter
-    // block size reches the specified limit.
-    // Note: this limit is currently applied to only index blocks; afilter
-    // partition is cut right after an index block is cut
-    // TODO(myabandeh): remove the note above when filter partitions are cut
-    // separately
-    uint64_t metadata_block_size = 4096;
+  // Block size for partitioned metadata. Currently applied to indexes when
+  // kTwoLevelIndexSearch is used and to filters when partition_filters is used
+  // Note: Since in the current implementation the filters and index partitions
+  // are aligned, and index/filter block is created when either index or filter
+  // block size reches the specified limit.
+  // Note: this limit is currently applied to only index blocks; afilter
+  // partition is cut right after an index block is cut
+  // TODO(myabandeh): remove the note above when filter partitions are cut
+  // separately
+  uint64_t metadata_block_size = 4096;
 
-    // Note: currently this option requires kTwoLevelIndexSearch to be set as
-    // well.
-    // TODO(myabandeh): remove the note above once the limitation is lifted
-    // Use partitioned full filters for each SST file. This options is
-    // incompatibile with block-based filter.
-    bool partition_filters = false;
+  // Note: currently this option requires kTwoLevelIndexSearch to be set as
+  // well.
+  // TODO(myabandeh): remove the note above once the limitation is lifted
+  // Use partitioned full filters for each SST file. This options is
+  // incompatibile with block-based filter.
+  bool partition_filters = false;
 
-    // Use delta encoding to compress keys in blocks.
-    // ReadOptions::pin_data requires this option to be disabled.
-    //
-    //Default： true
-    bool use_delta_encoding = true;
-    // If non-nullptr, use the specified filter policy to reduce disk reads.
-    // Many applications will benefit from passing the result of
-    // NewBloomFilterPolicy() here.
-    std::shared_ptr<const FilterPolicy> filter_policy = nullptr;
+  // Use delta encoding to compress keys in blocks.
+  // ReadOptions::pin_data requires this option to be disabled.
+  //
+  //Default： true
+  bool use_delta_encoding = true;
+  // If non-nullptr, use the specified filter policy to reduce disk reads.
+  // Many applications will benefit from passing the result of
+  // NewBloomFilterPolicy() here.
+  std::shared_ptr<const FilterPolicy> filter_policy = nullptr;
 
-    // If true, place whole keys in the filter (not just prefixes).
-    // This must generally be true for gets to be efficient.
-    bool whole_key_filtering = true;
+  // If true, place whole keys in the filter (not just prefixes).
+  // This must generally be true for gets to be efficient.
+  bool whole_key_filtering = true;
 
-    // Verify that decompressing the compressed block gives back the input. This
-    // is a verification mode that we use to detect bugs in compression
-    // algorithms.
-    bool verify_compression = false;
+  // Verify that decompressing the compressed block gives back the input. This
+  // is a verification mode that we use to detect bugs in compression
+  // algorithms.
+  bool verify_compression = false;
 
   // If used, For every data block we load into memory, we will create a bitmap
   // of size ((block_size / `read_amp_bytes_per_bit`) / 8) bytes. This bitmap

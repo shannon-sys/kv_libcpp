@@ -28,33 +28,33 @@ class KVImpl : public DB {
   virtual Iterator* NewIterator(const ReadOptions&);
   // ColumnFamily Interface
   virtual Status CreateColumnFamily(const ColumnFamilyOptions& options,
-				const std::string& column_family_name,
-				ColumnFamilyHandle** handle) override;
+                   const std::string& column_family_name,
+                   ColumnFamilyHandle** handle) override;
   virtual Status CreateColumnFamilies(const ColumnFamilyOptions& options,
-			const std::vector<std::string>& column_family_names,
-			std::vector<ColumnFamilyHandle*>* handles) override;
+                   const std::vector<std::string>& column_family_names,
+                   std::vector<ColumnFamilyHandle*>* handles) override;
   virtual Status CreateColumnFamilies(
-		const std::vector<ColumnFamilyDescriptor>& column_families,
-		std::vector<ColumnFamilyHandle*>* handles) override;
+                   const std::vector<ColumnFamilyDescriptor>& column_families,
+                   std::vector<ColumnFamilyHandle*>* handles) override;
   virtual Status DropColumnFamily(ColumnFamilyHandle* column_family) override;
   virtual Status DropColumnFamilies(
-		const std::vector<ColumnFamilyHandle*>& column_families) override;
+                   const std::vector<ColumnFamilyHandle*>& column_families) override;
   virtual Status DestroyColumnFamilyHandle(ColumnFamilyHandle* column_family) override;
   virtual Status Put(const WriteOptions& options,
-		ColumnFamilyHandle* column_family, const Slice& key,
-		const Slice& value) override;
+                   ColumnFamilyHandle* column_family, const Slice& key,
+                   const Slice& value) override;
   virtual Status Delete(const WriteOptions& options,
-		ColumnFamilyHandle* column_family, const Slice& key) override;
+                   ColumnFamilyHandle* column_family, const Slice& key) override;
   virtual Status Get(const ReadOptions& options,
-		ColumnFamilyHandle* column_family, const Slice& key,
-		std::string* value) override;
+                   ColumnFamilyHandle* column_family, const Slice& key,
+                   std::string* value) override;
   virtual Status KeyExist(const ReadOptions& options,
-		ColumnFamilyHandle* column_family, const Slice& key) override;
+                   ColumnFamilyHandle* column_family, const Slice& key) override;
   virtual Iterator* NewIterator(const ReadOptions& options,
-		ColumnFamilyHandle* column_family) override;
+                   ColumnFamilyHandle* column_family) override;
   virtual Status NewIterators(const ReadOptions& options,
-		const std::vector<ColumnFamilyHandle*>& column_families,
-		std::vector<Iterator*>* iterators) override;
+                   const std::vector<ColumnFamilyHandle*>& column_families,
+                   std::vector<Iterator*>* iterators) override;
   virtual ColumnFamilyHandle* DefaultColumnFamily() const override;
 
   virtual Status status() const {
