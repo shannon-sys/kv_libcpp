@@ -44,6 +44,20 @@ enum ChecksumType : char {
   kxxHash = 0x2,
 };
 
+// The index type that will be used for this table.
+enum IndexType : char {
+  // A space efficient index block that is optimized for
+  // binary-search-based index.
+  kBinarySearch,
+
+  // The hash index, if enabled, will do the hash lookup when
+  // Options prefix_extractor is provided.
+  kHashSearch,
+
+  // A two-level index implementation. Both levels are binary search indexes.
+  kTwoLevelIndexSearch,
+};
+
 struct TableFactory {
 };
 
@@ -55,20 +69,6 @@ struct BlockBasedTableOptions {
   // block cache, index and filter blocks may be less likely to be evicted
   // than data blocks.
   bool cache_index_and_filter_blocks_with_high_priority = false;
-
-  // The index type that will be used for this table.
-  enum IndexType : char {
-    // A space efficient index block that is optimized for
-    // binary-search-based index.
-    kBinarySearch,
-
-    // The hash index, if enabled, will do the hash lookup when
-    // Options prefix_extractor is provided.
-    kHashSearch,
-
-    // A two-level index implementation. Both levels are binary search indexes.
-    kTwoLevelIndexSearch,
-  };
 
   IndexType index_type = kBinarySearch;
 
