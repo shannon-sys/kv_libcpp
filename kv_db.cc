@@ -57,8 +57,8 @@ Status DB::ListColumnFamilies(const DBOptions& db_options,
                 const std::string& device,
                 std::vector<std::string>* column_families) {
     Status s;
-    struct cf_list list;
-    struct kvdb_handle handle;
+    struct uapi_cf_list list;
+    struct uapi_db_handle handle;
     int ret;
     int fd;
 

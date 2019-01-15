@@ -45,8 +45,8 @@ struct readbatch_cmd {
 struct write_batch_header {
 	unsigned long size;
 	unsigned long value_size;
-#define MAX_BATCH_COUNT              1000
-#define MAX_BATCH_NONATOMIC_COUNT    2000
+#define MAX_BATCH_COUNT             1000
+#define MAX_BATCH_NONATOMIC_COUNT   2000
 	int count;
 	int db_index;
 	int fill_cache;
@@ -82,7 +82,7 @@ struct venice_kv {
 
 struct uapi_key_status {
 	__u64 timestamp;
-	int db;
+	int db_index;
 	int cf_index;
 	int key_len;
 	int value_len;
@@ -91,7 +91,7 @@ struct uapi_key_status {
 	const char *key;
 };
 
-struct kv_cache_size {
+struct uapi_cache_size {
 	int db;
 	int cf_index;
 	unsigned long size;
@@ -109,15 +109,29 @@ struct uapi_checkpoint_list {
 	__u64 timestamp[MAX_CHECKPOINT_COUNT];
 };
 
-struct kv_db_status {
+struct uapi_db_status {
 	int db_index;
+	int cf_count;
 	int checkpoint_count;
+	int reserved;
+	unsigned long total_kv_count;
+	unsigned long total_disk_usage;
 	unsigned long total_cache_size;
 	unsigned long use_cache_size;
-	char reserved[40];
 };
 
-struct kv_dev_status {
+struct uapi_cf_status {
+	int db_index;
+	int cf_index;
+	int checkpoint_count;
+	int reserved;
+	unsigned long total_kv_count;
+	unsigned long total_disk_usage;
+	unsigned long use_cache_size;
+	unsigned long total_cache_size;
+};
+
+struct uapi_dev_status {
 	char tgttype[48];	/* target type name */
 	char tgtname[32];		/* dev to expose target as */
 
@@ -159,7 +173,7 @@ struct kv_dev_status {
 
 };
 
-struct kvdb_handle {
+struct uapi_db_handle {
 /* if the database doesn't exist, create it */
 #define O_DB_CREATE       0x1
 	unsigned long flags;
@@ -168,22 +182,22 @@ struct kvdb_handle {
 	char name[DB_NAME_LEN];
 };
 
-struct kvdb_list {
+struct uapi_db_list {
 	int list_all;
 	int count;
-	struct kvdb_handle dbs[MAX_DATABASE_COUNT];
+	struct uapi_db_handle dbs[MAX_DATABASE_COUNT];
 };
 
-struct cf_handle {
+struct uapi_cf_handle {
 	int db_index;
 	int cf_index;
 	char name[CF_NAME_LEN];
 };
 
-struct cf_list {
+struct uapi_cf_list {
 	int db_index;
 	int cf_count;
-	struct cf_handle cfs[MAX_CF_COUNT];
+	struct uapi_cf_handle cfs[MAX_CF_COUNT];
 };
 
 struct cf_iterator {

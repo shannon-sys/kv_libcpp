@@ -47,9 +47,9 @@ namespace shannon {
                     const std::vector<ColumnFamilyDescriptor>& column_families,
                     std::vector<ColumnFamilyHandle*>* handles) {
     Status s;
-    struct kvdb_handle handle;
-    struct kv_cache_size cache;
-    struct cf_list list;
+    struct uapi_db_handle handle;
+    struct uapi_cache_size cache;
+    struct uapi_cf_list list;
     int ret;
     bool find_column_family_name = false;
     if (handles == NULL) {
@@ -99,7 +99,7 @@ namespace shannon {
         }
     }
     /* open column_family */
-    struct cf_handle cfhandle;
+    struct uapi_cf_handle cfhandle;
     cfhandle.db_index = handle.db_index;
     for (auto column_family_descriptor : column_families) {
         strncpy(cfhandle.name, column_family_descriptor.name.data(),
@@ -295,7 +295,7 @@ namespace shannon {
       return Status::Corruption("the length of key is invalid !!!");
     memset(&status, 0, sizeof(struct uapi_key_status));
 
-    status.db = db_;
+    status.db_index = db_;
     status.cf_index =
         (reinterpret_cast<const ColumnFamilyHandle* >(column_family))->GetID();
     status.key = (char *)key.data();
@@ -446,7 +446,7 @@ namespace shannon {
                  const std::string& column_family_name,
                  ColumnFamilyHandle** handle) {
     Status s;
-    struct cf_handle cfhandle;
+    struct uapi_cf_handle cfhandle;
     int ret;
     std::string default_name(column_family_name);
 
@@ -509,7 +509,7 @@ namespace shannon {
   }
 
   Status KVImpl::DropColumnFamily(ColumnFamilyHandle* column_family) {
-    struct cf_handle cfhandle;
+    struct uapi_cf_handle cfhandle;
     Status s;
     int ret;
     std::string cf_name;
@@ -637,7 +637,7 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
       return dbname_;
   }
   Status DestroyDB(const std::string& device, const std::string& dbname, const Options& options) {
-    struct kvdb_handle handle;
+    struct uapi_db_handle handle;
     int fd, ret;
     Status s;
 
