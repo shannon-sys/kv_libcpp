@@ -91,4 +91,28 @@ Status DB::ListColumnFamilies(const DBOptions& db_options,
     return s;
 }
 
+Status GetSequenceNumber(std::string& device, uint64_t *sequence)
+{
+  Status s;
+  int ret, fd;
+  struct uapi_ts_get_option option;
+  *sequence = 0xffffffffffffffff;
+
+  fd = open(device.data(), O_RDWR);
+  if (fd < 0) {
+    return Status::NotFound(strerror(errno));
+  }
+
+  memset(&option, 0, sizeof(option));
+  option.get_type = GET_DEV_CUR_TIMESTAMP;
+  ret = ioctl(fd, IOCTL_GET_TIMESTAMP, &option);
+  if (ret < 0) {
+    std::cout<<"ioctl get sequence numver failed!"<<std::endl;
+    return Status::IOError(strerror(errno));
+  }
+  *sequence = option.timestamp;
+  close(fd);
+  return s;
+}
+
 }

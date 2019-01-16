@@ -56,6 +56,7 @@ enum {
 	MTABLE_ITER_MOVE_CMD,
 	MTABLE_ITER_GET_CMD,
 	CF_STATUS_CMD,
+	GET_TIMESTAMP_CMD,
 };
 
 
@@ -102,6 +103,8 @@ enum {
 #define IOCTL_ITERATOR_SEEK    _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_SEEK_CMD, struct uapi_iter_seek_option)
 #define IOCTL_ITERATOR_MOVE    _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_MOVE_CMD, struct uapi_iter_move_option)
 #define IOCTL_ITERATOR_GET     _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_GET_CMD, struct uapi_iter_get_option)
+
+#define IOCTL_GET_TIMESTAMP     _IOWR(VENICE_KV_IOCTL_FLAGS, GET_TIMESTAMP_CMD, struct uapi_ts_get_option)
 
 #define IOCTL_DB_STATUS        _IOWR(VENICE_KV_IOCTL_FLAGS, DB_STATUS_CMD, struct uapi_db_status)
 #define IOCTL_KEY_STATUS       _IOWR(VENICE_KV_IOCTL_FLAGS, KEY_STATUS_CMD, struct uapi_key_status)

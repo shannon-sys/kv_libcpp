@@ -29,6 +29,12 @@ int main (int argc,char * argv[])
 	options.create_if_missing = true;
 	shannon::Status status = shannon::DB::Open (options, "testdb", dbpath, &db);
 	assert(status.ok());
+	uint64_t ts1 = 0, ts2 = 0;
+
+	status = shannon::GetSequenceNumber(dbpath, &ts1);
+	assert(status.ok());
+	std::cout << "timestamp1=" << ts1 << std::endl;
+
 	printf("db:%p\n",db);
 	status = db->Put(shannon::WriteOptions(), "hello", "world");
 	assert(status.ok());
@@ -37,10 +43,13 @@ int main (int argc,char * argv[])
 	std::cout << value << std::endl;
 	assert (status.ok());
 	status = db->Put(shannon::WriteOptions(), "hello", "myworld");
-
 	status = db->Get(shannon::ReadOptions(), "hello", &value);
 	assert(status.ok());
 	std::cout << value << std::endl;
+
+	status = shannon::GetSequenceNumber(dbpath, &ts2);
+	assert(status.ok() && (ts2 - ts1 == 2));
+	std::cout << "timestamp2=" << ts2 << std::endl;
 
 	WriteBatch batch;
 	batch.Put("batch1", Slice("mybatchtest"));

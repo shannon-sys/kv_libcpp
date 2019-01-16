@@ -337,6 +337,8 @@ class ColumnFamilyHandle {
     ColumnFamilyDescriptor cf_descriptor_;
 };
 
+Status GetSequenceNumber(std::string& device, uint64_t *sequence);
+
 static void CancelAllBackgroundWork(DB* db, bool flag){
 
 }

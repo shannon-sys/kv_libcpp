@@ -248,6 +248,12 @@ struct uapi_iter_get_option {
 	int value_len;
 };
 
+struct uapi_ts_get_option {
+	__u64 timestamp;
+#define GET_DEV_CUR_TIMESTAMP       1
+	unsigned long get_type;
+};
+
 struct uapi_test_mtable {
 	unsigned char name[32];
 	int type;
