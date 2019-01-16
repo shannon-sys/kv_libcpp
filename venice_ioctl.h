@@ -97,13 +97,26 @@ enum {
 #define OPEN_COLUMNFAMILY   _IOWR(VENICE_KV_IOCTL_FLAGS, OPEN_CF_CMD, struct uapi_cf_handle)
 #define LIST_COLUMNFAMILY   _IOWR(VENICE_KV_IOCTL_FLAGS, LIST_CF_CMD, struct uapi_cf_list)
 
-#define IOCTL_CREATE_ITERATOR  _IOWR(VENICE_KV_IOCTL_FLAGS, CREATE_ITERATOR_CMD, struct kvdb_iterator)
-#define IOCTL_DESTROY_ITERATOR _IOWR(VENICE_KV_IOCTL_FLAGS, DESTROY_ITERATOR_CMD, struct cf_iterator)
-#define IOCTL_ITERATOR_SEEK    _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_SEEK_CMD, struct kvdb_iter_seek_option)
-#define IOCTL_ITERATOR_MOVE    _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_MOVE_CMD, struct kvdb_iter_move_option)
-#define IOCTL_ITERATOR_GET     _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_GET_CMD, struct kvdb_iter_get_option)
+#define IOCTL_CREATE_ITERATOR  _IOWR(VENICE_KV_IOCTL_FLAGS, CREATE_ITERATOR_CMD, struct uapi_db_iterator)
+#define IOCTL_DESTROY_ITERATOR _IOWR(VENICE_KV_IOCTL_FLAGS, DESTROY_ITERATOR_CMD, struct uapi_cf_iterator)
+#define IOCTL_ITERATOR_SEEK    _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_SEEK_CMD, struct uapi_iter_seek_option)
+#define IOCTL_ITERATOR_MOVE    _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_MOVE_CMD, struct uapi_iter_move_option)
+#define IOCTL_ITERATOR_GET     _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_GET_CMD, struct uapi_iter_get_option)
 
 #define IOCTL_DB_STATUS        _IOWR(VENICE_KV_IOCTL_FLAGS, DB_STATUS_CMD, struct uapi_db_status)
 #define IOCTL_KEY_STATUS       _IOWR(VENICE_KV_IOCTL_FLAGS, KEY_STATUS_CMD, struct uapi_key_status)
 #define IOCTL_CF_STATUS        _IOWR(VENICE_KV_IOCTL_FLAGS, CF_STATUS_CMD, struct uapi_cf_status)
+
+/* Test Interace */
+#define IOCTL_CREATE_MTABLE     _IOWR(VENICE_KV_IOCTL_FLAGS, CREATE_MTABLE_CMD, struct uapi_test_mtable)
+#define IOCTL_FREE_MTABLE       _IOWR(VENICE_KV_IOCTL_FLAGS, FREE_MTABLE_CMD, struct uapi_test_mtable)
+#define IOCTL_MTABLE_PUT_KEY    _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_PUT_KEY_CMD, struct uapi_test_mtable)
+#define IOCTL_MTABLE_GET_KEY    _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_GET_KEY_CMD, struct uapi_test_mtable)
+#define IOCTL_MTABLE_DEL_KEY    _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_DEL_KEY_CMD, struct uapi_test_mtable)
+
+#define IOCTL_MTABLE_CREATE_ITER     _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_CREATE_ITER_CMD, struct uapi_test_mtable_iter)
+#define IOCTL_MTABLE_RELEASE_ITER    _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_RELEASE_ITER_CMD, struct uapi_test_mtable_iter)
+#define IOCTL_MTABLE_ITER_SEEK       _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_ITER_SEEK_CMD, struct uapi_miter_seek_option)
+#define IOCTL_MTABLE_ITER_MOVE       _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_ITER_MOVE_CMD, struct uapi_miter_move_option)
+#define IOCTL_MTABLE_ITER_GET        _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_ITER_GET_CMD, struct uapi_miter_get_option)
 #endif /* end of __VENICE_IOCTL__ */

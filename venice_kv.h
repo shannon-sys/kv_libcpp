@@ -88,7 +88,7 @@ struct uapi_key_status {
 	int value_len;
 	int exist;
 	int reserved;
-	const char *key;
+	char *key;
 };
 
 struct uapi_cache_size {
@@ -200,7 +200,7 @@ struct uapi_cf_list {
 	struct uapi_cf_handle cfs[MAX_CF_COUNT];
 };
 
-struct cf_iterator {
+struct uapi_cf_iterator {
 	__u64 timestamp;
 	unsigned int db_index;
 	unsigned int cf_index;
@@ -208,15 +208,15 @@ struct cf_iterator {
 	int valid_key;
 };
 
-struct kvdb_iterator {
+struct uapi_db_iterator {
 	__u64 timestamp;
 	unsigned int db_index;
 	unsigned int count;
-	struct cf_iterator iters[0];
+	struct uapi_cf_iterator iters[0];
 };
 
-struct kvdb_iter_seek_option {
-	struct cf_iterator iter;
+struct uapi_iter_seek_option {
+	struct uapi_cf_iterator iter;
 
 #define SEEK_FIRST         1
 #define SEEK_LAST          2
@@ -228,15 +228,15 @@ struct kvdb_iter_seek_option {
 	char key[256];
 };
 
-struct kvdb_iter_move_option {
-	struct cf_iterator iter;
+struct uapi_iter_move_option {
+	struct uapi_cf_iterator iter;
 #define MOVE_NEXT     1
 #define MOVE_PREV    2
 	int move_direction;
 };
 
-struct kvdb_iter_get_option {
-	struct cf_iterator iter;
+struct uapi_iter_get_option {
+	struct uapi_cf_iterator iter;
 #define ITER_GET_KEY	0x1
 #define ITER_GET_VALUE	0x2
 	unsigned long get_type;
@@ -246,6 +246,48 @@ struct kvdb_iter_get_option {
 	char *value;
 	int value_buf_len;
 	int value_len;
+};
+
+struct uapi_test_mtable {
+	unsigned char name[32];
+	int type;
+	int db_index;
+	int cf_index;
+	int key_len;
+	int value_len;
+	__u64 pba;
+	__u64 timestamp;
+	char *key;
+};
+
+struct uapi_test_mtable_iter {
+	unsigned char mt_name[32];
+	int fd;
+	int iter_index;
+	int valid_key;
+};
+
+struct uapi_miter_move_option {
+	struct uapi_test_mtable_iter iter;
+	int move_direction;
+};
+
+struct uapi_miter_seek_option {
+	struct uapi_test_mtable_iter iter;
+	int seek_type;
+	int key_len;
+	char key[256];
+};
+
+struct uapi_miter_get_option {
+	struct uapi_test_mtable_iter iter;
+	int db_index;
+	int cf_index;
+	int key_len;
+	int value_len;
+	__u64 pba;
+	__u64 timestamp;
+	char key[256];
 };
 
 #endif /* end of __VENICE_KV__ */

@@ -362,14 +362,14 @@ namespace shannon {
 
   Iterator* KVImpl::NewIterator(const ReadOptions& options,
                       ColumnFamilyHandle* column_family) {
-    struct kvdb_iterator *iter = NULL;
+    struct uapi_db_iterator *iter = NULL;
     int ret = 0;
 
     if (column_family == NULL) {
         status_ = Status::InvalidArgument(strerror(errno));
         return NULL;
     }
-    iter = (struct kvdb_iterator *)(new uint8_t[sizeof(struct kvdb_iterator)+sizeof(struct cf_iterator)]);
+    iter = (struct uapi_db_iterator *)(new uint8_t[sizeof(struct uapi_db_iterator)+sizeof(struct uapi_cf_iterator)]);
     if (iter == NULL) {
         status_ = Status::InvalidArgument("malloc memory failed!");
         return NULL;
@@ -398,14 +398,14 @@ namespace shannon {
                  std::vector<Iterator*>* iterators) {
     Status s;
     int ret;
-    struct kvdb_iterator *iter = NULL;
+    struct uapi_db_iterator *iter = NULL;
 
     if (iterators == NULL) {
         return Status::InvalidArgument("iterator is not null");
     }
-    iter = (struct kvdb_iterator *)malloc(
-            sizeof(struct kvdb_iterator) +
-            sizeof(struct cf_iterator) * column_families.size());
+    iter = (struct uapi_db_iterator *)malloc(
+            sizeof(struct uapi_db_iterator) +
+            sizeof(struct uapi_cf_iterator) * column_families.size());
     if (iter == NULL) {
         return Status::InvalidArgument("malloc failed!");
     }

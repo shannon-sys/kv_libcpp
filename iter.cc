@@ -61,7 +61,7 @@ class KVIter: public Iterator {
 };
 
 KVIter::~KVIter() {
-  struct cf_iterator iter;
+  struct uapi_cf_iterator iter;
   int ret = 0;
 
   iter.db_index = db_->db_;
@@ -76,7 +76,7 @@ KVIter::~KVIter() {
 }
 
 void KVIter::Next() {
-  struct kvdb_iter_move_option move;
+  struct uapi_iter_move_option move;
   int ret;
 
   move.iter.db_index = db_->db_;
@@ -103,7 +103,7 @@ void KVIter::Next() {
 }
 
 void KVIter::Prev() {
-  struct kvdb_iter_move_option move;
+  struct uapi_iter_move_option move;
   int ret;
 
   status_ = Status();
@@ -131,7 +131,7 @@ void KVIter::Prev() {
 }
 
 void KVIter::Seek(const Slice& target) {
-  struct kvdb_iter_seek_option seek;
+  struct uapi_iter_seek_option seek;
   int ret;
 
   status_ = Status();
@@ -152,7 +152,7 @@ void KVIter::Seek(const Slice& target) {
 }
 
 void KVIter::SeekToFirst() {
-  struct kvdb_iter_seek_option seek;
+  struct uapi_iter_seek_option seek;
   int ret;
 
   /* use prefix */
@@ -208,7 +208,7 @@ bool KVIter::IncreaseOne(char *prefix, int prefix_length) {
 }
 
 void KVIter::SeekToLast() {
-  struct kvdb_iter_seek_option seek;
+  struct uapi_iter_seek_option seek;
   int ret;
   bool is_overflow;
   char prefix[256];
@@ -253,7 +253,7 @@ void KVIter::SeekToLast() {
 }
 
 void KVIter::SeekForPrev(const Slice& target) {
-    struct kvdb_iter_seek_option seek;
+    struct uapi_iter_seek_option seek;
     int ret;
 
     status_ = Status();
@@ -284,10 +284,10 @@ void KVIter::SetPrefix(const Slice& prefix) {
 }
 
 Slice KVIter::key() {
-  struct kvdb_iter_get_option get;
+  struct uapi_iter_get_option get;
   int ret;
 
-  memset(&get, 0, sizeof(struct kvdb_iter_get_option));
+  memset(&get, 0, sizeof(struct uapi_iter_get_option));
   status_ = Status();
   saved_key_.clear();
   get.iter.db_index = db_->db_;
@@ -309,7 +309,7 @@ Slice KVIter::key() {
 }
 
 Slice KVIter::value() {
-  struct kvdb_iter_get_option get;
+  struct uapi_iter_get_option get;
   int ret;
 
   status_ = Status();
