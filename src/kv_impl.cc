@@ -13,11 +13,11 @@
 #include <iostream>
 #include <errno.h>
 #include <algorithm>
-#include "kv_impl.h"
-#include "venice_kv.h"
-#include "venice_ioctl.h"
-#include "write_batch_internal.h"
-#include "iter.h"
+#include "src/kv_impl.h"
+#include "src/venice_kv.h"
+#include "src/venice_ioctl.h"
+#include "src/write_batch_internal.h"
+#include "src/iter.h"
 #include "swift/env.h"
 #include "table/sst_table.h"
 

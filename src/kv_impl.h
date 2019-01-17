@@ -7,9 +7,9 @@
 #include <deque>
 #include <set>
 #include "swift/shannon_db.h"
-#include "venice_kv.h"
-#include "snapshot.h"
-#include "column_family.h"
+#include "src/venice_kv.h"
+#include "src/snapshot.h"
+#include "src/column_family.h"
 
 namespace shannon {
 class KVImpl : public DB {

@@ -5,8 +5,8 @@ HEAD=./include
 CXXFLAGS = -std=c++11
 .PHONY:clean test ${LibName} install uninstall
 
-${LibName}:kv_db.o kv_impl.o status.o write_batch.o iter.o column_family.o \
-	util/coding.o util/comparator.o util/bloom.o util/hash.o \
+${LibName}:src/kv_db.o src/kv_impl.o src/status.o src/write_batch.o src/iter.o \
+	src/column_family.o util/coding.o util/comparator.o util/bloom.o util/hash.o \
 	util/crc32c.o util/xxhash.o util/fileoperate.o \
 	cache/lru_cache.o cache/sharded_cache.o \
 	table/block_based_table_factory.o table/sst_table.o env/env_posix.o
@@ -30,4 +30,4 @@ install:
 	g++ $(CXXFLAGS) -g -fPIC -I${HEAD} -I. -c $^ -o $@
 
 clean:
-	rm -rf *.o *.so *.a *_test util/*.o table/*.o env/*.o cache/*.o
+	rm -rf *.o *.so *.a *_test src/*.o util/*.o table/*.o env/*.o cache/*.o

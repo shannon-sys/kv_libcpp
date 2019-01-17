@@ -2,7 +2,7 @@
 #define __VENICE_KV__
 
 #include <linux/types.h>
-#include "venice_macro.h"
+#include "src/venice_macro.h"
 
 struct uapi_snapshot {
 	int db;

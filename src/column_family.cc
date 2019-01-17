@@ -3,7 +3,7 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 //
 #include "swift/shannon_db.h"
-#include "column_family.h"
+#include "src/column_family.h"
 #include <string>
 
 namespace shannon {

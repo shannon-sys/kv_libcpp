@@ -12,8 +12,8 @@
 #include <linux/types.h>
 #include <linux/ioctl.h>
 #include <linux/version.h>
-#include "venice_macro.h"
-#include "venice_kv.h"
+#include "src/venice_macro.h"
+#include "src/venice_kv.h"
 
 enum {
 	GET_KV_CMD = 0x13,

@@ -6,7 +6,7 @@
 #include "swift/write_batch.h"
 #include "write_batch_internal.h"
 #include "util/coding.h"
-#include "venice_kv.h"
+#include "src/venice_kv.h"
 
 #define OFFSET(Type, member) (size_t)&( ((Type*)0)->member)
 #define PutFixedAlign(des, src)               \

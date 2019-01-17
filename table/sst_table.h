@@ -9,13 +9,13 @@
 #include <string.h>
 #include <string>
 #include <vector>
-#include "venice_macro.h"
+#include "src/venice_macro.h"
 #include "swift/slice.h"
 #include "swift/status.h"
 #include "swift/options.h"
 #include "swift/table.h"
 #include "swift/shannon_db.h"
-#include "column_family.h"
+#include "src/column_family.h"
 
 namespace shannon {
 

@@ -10,10 +10,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "venice_kv.h"
-#include "venice_ioctl.h"
+#include "src/venice_kv.h"
+#include "src/venice_ioctl.h"
 #include "swift/shannon_db.h"
-#include "kv_impl.h"
+#include "src/kv_impl.h"
 
 using namespace std;
 using shannon::Status;

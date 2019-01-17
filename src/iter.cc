@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <iostream>
-#include "kv_impl.h"
+#include "src/kv_impl.h"
 #include "swift/iterator.h"
-#include "venice_kv.h"
-#include "venice_ioctl.h"
+#include "src/venice_kv.h"
+#include "src/venice_ioctl.h"
 
 namespace shannon {
 

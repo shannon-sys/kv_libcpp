@@ -3,12 +3,13 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 //
 
-#pragma once
+#ifndef SHANNON_COLUMN_FAMILY_H_
+#define SHANNON_COLUMN_FAMILY_H_
 
-#include "swift/shannon_db.h"
-#include "venice_macro.h"
 #include <string>
 #include <atomic>
+#include "swift/shannon_db.h"
+#include "venice_macro.h"
 
 namespace shannon{
  class ColumnFamilyHandleImpl : public ColumnFamilyHandle {
@@ -25,3 +26,5 @@ namespace shannon{
     std::string name;
  };
 };	//namespace shannon
+
+#endif  // SHANNON_COLUMN_FAMILY_H_
