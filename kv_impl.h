@@ -1,3 +1,7 @@
+// Copyright (c) 2018 Shannon Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+//
 #ifndef KV_IMPL_INCLUDE_H
 #define KV_IMPL_INCLUDE_H
 #include <deque>
