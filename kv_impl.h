@@ -75,9 +75,9 @@ class KVImpl : public DB {
   virtual Status GetSortedWalFiles(VectorLogPtr& files) override;
   virtual Options GetOptions(ColumnFamilyHandle* column_family) const override;
   virtual const std::string& GetName() const override;
-   void SetCfOptoions(const Options & options){
+  void SetCfOptoions(const Options & options){
             cf_options_ = options;
-   }
+  }
  protected:
   Env* const env_;
  private:

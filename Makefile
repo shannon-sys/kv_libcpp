@@ -6,11 +6,10 @@ CXXFLAGS = -std=c++11
 .PHONY:clean test ${LibName} install uninstall
 
 ${LibName}:kv_db.o kv_impl.o status.o write_batch.o iter.o column_family.o \
-	util/coding.o util/options.o util/comparator.o util/bloom.o util/hash.o \
+	util/coding.o util/comparator.o util/bloom.o util/hash.o \
 	util/crc32c.o util/xxhash.o util/fileoperate.o \
 	cache/lru_cache.o cache/sharded_cache.o \
-	table/block_based_table_factory.o table/sst_table.o \
-	env/env.o env/env_posix.o
+	table/block_based_table_factory.o table/sst_table.o env/env_posix.o
 	g++ $(CXXFLAGS) -g -fPIC --shared $^ -o $@ -lsnappy
 	ar -rcs ${LibNameStatic} $^
 

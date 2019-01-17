@@ -13,7 +13,6 @@ class SnapshotImpl : public Snapshot {
     delete s;
   }
 
-  //virtual ~SnapshotImpl() {}
 };
 
 }
