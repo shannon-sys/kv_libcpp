@@ -13,10 +13,9 @@
 #include "swift/iterator.h"
 #include "swift/env.h"
 #include "swift/table.h"
-#include "swift/compaction_filter.h"
+#include "swift/comparator.h"
 #include "swift/types.h"
 #include "swift/transaction_log.h"
-#include "swift/comparator.h"
 
 namespace shannon {
 
