@@ -51,6 +51,13 @@ int main (int argc,char * argv[])
 	assert(status.ok());
     std::cout << value << std::endl;
 
+	status = db->KeyExist(shannon::ReadOptions(), "batch1");
+	assert(status.ok());
+	std::cout << "batch1 is exist" << std::endl;
+	status = db->KeyExist(shannon::ReadOptions(), "batch1_ha");
+	assert(status.IsNotFound());
+	std::cout << "batch1_ha is not exist" << std::endl;
+
 	WriteBatchNonatomic batch_non;
 	batch_non.Put("batch1_nonatomic", Slice("mybatchtest_nonatomic"));
 	batch_non.Put("batch2_nonatomic", Slice("mybatchtest2_nonatomic"));
