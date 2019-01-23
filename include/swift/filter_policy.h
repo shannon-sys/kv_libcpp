@@ -16,7 +16,8 @@ namespace shannon {
 
 class FilterPolicy {
 };
-
+extern const FilterPolicy* NewBloomFilterPolicy(int bits_per_key,
+        bool use_block_based_builder = true);
 }
 
 #endif  // STORAGE_SHANNONDB_INCLUDE_FILTER_POLICY_H_

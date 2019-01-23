@@ -15,6 +15,7 @@ class Env {
   virtual Status GetCurrentTime(int64_t* unix_time) = 0;
   virtual std::string TimeToString(uint64_t time) = 0;
   static Env* Default();
+  virtual ~Env() {  }
 };
 
 class EnvWrapper : public Env {

@@ -36,6 +36,18 @@ enum CompressionType : unsigned char {
 struct DBOptions {
   bool create_if_missing = false;
   bool create_missing_column_families = false;
+  size_t keep_log_file_num = 1000;
+  size_t max_manifest_file_size = 64 * 1024 * 1024;
+  size_t max_log_file_size = 0;
+  size_t write_buffer_size = 64 << 20;
+  size_t target_file_size_base = 64 * 1048576;
+  int max_background_flushes = -1;
+  int max_background_compactions = -1;
+  int max_open_files = -1;
+  int max_bytes_for_level_multiplier = -1;
+  int optimize_filters_for_hits = -1;
+  int level_compaction_dynamic_level_bytes = -1;
+  CompressionType compression;
   Env* env = Env::Default();
   DBOptions(){}
 };
@@ -99,6 +111,8 @@ struct WriteOptions {
 };
 
 struct CompactRangeOptions {
+  bool exclusive_manual_compaction = true;
+  bool change_level = false;
 };
 
 };  // namespace shannon
