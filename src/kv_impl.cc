@@ -637,9 +637,15 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
   Options KVImpl::GetOptions(ColumnFamilyHandle* handle) const {
       return Options();
   }
+
   const std::string& KVImpl::GetName() const {
       return dbname_;
   }
+
+  const int32_t KVImpl::GetIndex() const {
+      return fd_;
+  }
+
   Status DestroyDB(const std::string& device, const std::string& dbname, const Options& options) {
     struct uapi_db_handle handle;
     int fd, ret;

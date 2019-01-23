@@ -194,6 +194,8 @@ class DB {
   }
   virtual const std::string& GetName() const = 0;
 
+  virtual const int32_t GetIndex() const = 0;
+
   virtual Env* GetEnv() const = 0;
 
  private:
