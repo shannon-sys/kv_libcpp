@@ -13,6 +13,7 @@
 #include <iostream>
 #include <errno.h>
 #include <algorithm>
+#include <sstream>
 #include "src/kv_impl.h"
 #include "src/venice_kv.h"
 #include "src/venice_ioctl.h"
@@ -610,7 +611,26 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
 
   bool KVImpl::GetProperty(ColumnFamilyHandle* column_family,
           const Slice& property, std::string* value) {
-      return true;
+    if (column_family == NULL) {
+      return false;
+    }
+    struct uapi_cf_status cf_status;
+    int ret = -1;
+    cf_status.db_index = db_;
+    cf_status.cf_index = column_family->GetID();
+    ret = ioctl(fd_, IOCTL_CF_STATUS, &cf_status);
+    if (ret < 0) {
+      return false;
+    }
+    if (property.compare("shannon.cur-size-all-mem-tables") == 0) {
+      stringstream ss;
+      ss<<cf_status.total_cache_size;
+      std::string s = ss.str();
+      if (value != NULL) {
+        value->assign(s);
+      }
+    }
+    return true;
   }
 
   SequenceNumber KVImpl::GetLatestSequenceNumber() const {
