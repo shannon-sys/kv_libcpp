@@ -232,10 +232,6 @@ class ColumnFamilyHandle {
 
 Status GetSequenceNumber(std::string& device, uint64_t *sequence);
 
-static void CancelAllBackgroundWork(DB* db, bool flag){
-
-}
-
 }  // namespace shannon
 
 #endif // SHANNON_DB_INCLUDE_DB_H_
