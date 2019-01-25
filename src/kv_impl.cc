@@ -44,6 +44,7 @@ namespace shannon {
     s = this->Open(options_, column_family_descriptors, &column_family_handles);
     if (s.ok()) {
         default_cf_handle_ = dynamic_cast<ColumnFamilyHandleImpl* >(column_family_handles[0]);
+        handles_.push_back(default_cf_handle_);
     }
     return s;
   }
@@ -126,6 +127,8 @@ namespace shannon {
         ColumnFamilyHandle *column_family_handle = new ColumnFamilyHandleImpl(
                 cfhandle.db_index, cfhandle.cf_index, column_family_descriptor.name);
         handles->push_back(column_family_handle);
+        /* save a copy in the db object */
+        handles_.push_back(column_family_handle);
         /* set cache size */
         if (column_family_descriptor.options.cache_size > 0) {
             cache.db = this->db_;
@@ -140,7 +143,7 @@ namespace shannon {
     /* set default handle */
     if (handles->size() > 0)
         default_cf_handle_ = dynamic_cast<ColumnFamilyHandleImpl* >((*handles)[0]);
-    for (int i =0;i<(*handles).size();++i ){
+    for (int i = 0; i < (*handles).size(); ++i) {
         (*handles)[i]->SetDescriptor(column_families[i]);
     }
     return s;
@@ -660,6 +663,16 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
 
   const std::string& KVImpl::GetName() const {
       return dbname_;
+  }
+
+  const ColumnFamilyHandle* KVImpl::GetColumnFamilyHandle(
+          int32_t column_family_id) const {
+    for (auto handle : handles_) {
+      if (handle && handle->GetID() == column_family_id) {
+        return handle;
+      }
+    }
+    return NULL;
   }
 
   const int32_t KVImpl::GetIndex() const {

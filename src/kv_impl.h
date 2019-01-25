@@ -79,6 +79,8 @@ class KVImpl : public DB {
   virtual Status GetSortedWalFiles(VectorLogPtr& files) override;
   virtual Options GetOptions(ColumnFamilyHandle* column_family) const override;
   virtual const std::string& GetName() const override;
+  virtual const ColumnFamilyHandle* GetColumnFamilyHandle(
+                              int32_t column_family_id) const override;
   virtual const int32_t GetIndex() const override;
   void SetCfOptoions(const Options & options){
             cf_options_ = options;
@@ -97,6 +99,7 @@ class KVImpl : public DB {
   const std::string dbname_;
   const std::string device_;
   ColumnFamilyHandleImpl* default_cf_handle_; // default column_family handle
+  std::vector<ColumnFamilyHandle*> handles_;
   Status Open();
   Status Open(const DBOptions& db_options,
           const std::vector<ColumnFamilyDescriptor>& column_families,
