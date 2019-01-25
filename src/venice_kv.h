@@ -246,6 +246,7 @@ struct uapi_iter_get_option {
 	char *value;
 	int value_buf_len;
 	int value_len;
+	__u64 timestamp;
 };
 
 struct uapi_ts_get_option {
