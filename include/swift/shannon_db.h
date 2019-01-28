@@ -197,7 +197,7 @@ class DB {
   virtual const ColumnFamilyHandle* GetColumnFamilyHandle(
           int32_t column_family_id) const = 0;
 
-  virtual const int32_t GetIndex() const = 0;
+  virtual int32_t GetIndex() const = 0;
 
   virtual Env* GetEnv() const = 0;
 

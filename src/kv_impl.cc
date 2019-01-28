@@ -675,7 +675,7 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
     return NULL;
   }
 
-  const int32_t KVImpl::GetIndex() const {
+  int32_t KVImpl::GetIndex() const {
       return fd_;
   }
 

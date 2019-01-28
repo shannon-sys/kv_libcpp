@@ -81,7 +81,7 @@ class KVImpl : public DB {
   virtual const std::string& GetName() const override;
   virtual const ColumnFamilyHandle* GetColumnFamilyHandle(
                               int32_t column_family_id) const override;
-  virtual const int32_t GetIndex() const override;
+  virtual int32_t GetIndex() const override;
   void SetCfOptoions(const Options & options){
             cf_options_ = options;
   }
