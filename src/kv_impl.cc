@@ -676,7 +676,7 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
   }
 
   int32_t KVImpl::GetIndex() const {
-      return fd_;
+      return db_;
   }
 
   Status DestroyDB(const std::string& device, const std::string& dbname, const Options& options) {
