@@ -255,6 +255,47 @@ struct uapi_ts_get_option {
 	unsigned long get_type;
 };
 
+struct uapi_log_iterator {
+	int iter_index;
+	int valid_iter;
+};
+
+struct uapi_log_iter_create {
+	struct uapi_log_iterator iter;
+	__u64 timestamp;
+};
+
+struct uapi_log_iter_move_option {
+	struct uapi_log_iterator iter;
+	__u64 timestamp;
+#define LOG_MOVE_NEXT     0x01
+	int move_direction;
+	int valid_key;
+};
+
+struct uapi_log_iter_get_option {
+	struct uapi_log_iterator iter;
+	__u64 timestamp;
+#define LOG_ITER_GET_KEY     0x01
+#define LOG_ITER_GET_VALUE   0x02
+	unsigned char get_type;
+	unsigned char valid_key;
+	unsigned char db_index;
+	unsigned char cf_index;
+#define LOG_ADD_KEY          0x01
+#define LOG_DELETE_KEY       0x02
+#define LOG_CREATE_DB        0x03
+#define LOG_DELETE_DB        0x04
+	unsigned char optype;
+	unsigned char reserved[3];
+	int key_buf_len;
+	int key_len;
+	char *key;
+	int value_buf_len;
+	int value_len;
+	char *value;
+};
+
 struct uapi_test_mtable {
 	unsigned char name[32];
 	int type;

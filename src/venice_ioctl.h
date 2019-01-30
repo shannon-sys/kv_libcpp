@@ -57,6 +57,10 @@ enum {
 	MTABLE_ITER_GET_CMD,
 	CF_STATUS_CMD,
 	GET_TIMESTAMP_CMD,
+	CREATE_LOG_ITER_CMD,
+	DESTROY_LOG_ITER_CMD,
+	LOG_ITER_MOVE_CMD,
+	LOG_ITER_GET_CMD,
 };
 
 
@@ -105,6 +109,10 @@ enum {
 #define IOCTL_ITERATOR_GET     _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_GET_CMD, struct uapi_iter_get_option)
 
 #define IOCTL_GET_TIMESTAMP     _IOWR(VENICE_KV_IOCTL_FLAGS, GET_TIMESTAMP_CMD, struct uapi_ts_get_option)
+#define IOCTL_CREATE_LOG_ITER   _IOWR(VENICE_KV_IOCTL_FLAGS, CREATE_LOG_ITER_CMD, struct uapi_log_iter_create)
+#define IOCTL_DESTROY_LOG_ITER  _IOWR(VENICE_KV_IOCTL_FLAGS, DESTROY_LOG_ITER_CMD, struct uapi_log_iterator)
+#define IOCTL_LOG_ITER_MOVE     _IOWR(VENICE_KV_IOCTL_FLAGS, LOG_ITER_MOVE_CMD, struct uapi_log_iter_move_option)
+#define IOCTL_LOG_ITER_GET      _IOWR(VENICE_KV_IOCTL_FLAGS, LOG_ITER_GET_CMD, struct uapi_log_iter_get_option)
 
 #define IOCTL_DB_STATUS        _IOWR(VENICE_KV_IOCTL_FLAGS, DB_STATUS_CMD, struct uapi_db_status)
 #define IOCTL_KEY_STATUS       _IOWR(VENICE_KV_IOCTL_FLAGS, KEY_STATUS_CMD, struct uapi_key_status)

@@ -8,7 +8,7 @@ CXXFLAGS = -std=c++11
 ${LibName}:src/kv_db.o src/kv_impl.o src/status.o src/write_batch.o src/iter.o \
 	src/column_family.o util/coding.o util/comparator.o util/bloom.o util/hash.o \
 	util/crc32c.o util/xxhash.o util/fileoperate.o \
-	cache/lru_cache.o cache/sharded_cache.o \
+	src/log_iter.o cache/lru_cache.o cache/sharded_cache.o \
 	table/block_based_table_factory.o table/sst_table.o env/env_posix.o
 	g++ $(CXXFLAGS) -g -fPIC --shared $^ -o $@ -lsnappy
 	ar -rcs ${LibNameStatic} $^
@@ -16,6 +16,8 @@ ${LibName}:src/kv_db.o src/kv_impl.o src/status.o src/write_batch.o src/iter.o \
 db_test:test/db_test.c
 	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -I${HEAD} -g $^ -o $@ -l${Target}
 sst_test:test/sst_test.cc
+	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -I${HEAD} -g $^ -o $@ -l${Target}
+log_iter_test:test/log_iter_test.cc
 	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -I${HEAD} -g $^ -o $@ -l${Target}
 uninstall:
 	sudo rm -rf /usr/include/swift
