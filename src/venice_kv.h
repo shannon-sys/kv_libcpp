@@ -258,6 +258,7 @@ struct uapi_ts_get_option {
 struct uapi_log_iterator {
 	int iter_index;
 	int valid_iter;
+	__u64 iter_sequence;
 };
 
 struct uapi_log_iter_create {

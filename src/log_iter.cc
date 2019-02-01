@@ -17,10 +17,11 @@ namespace shannon {
 
 class LogIteratorImpl : public LogIterator {
  public:
-  LogIteratorImpl(std::string& device, int fd, int idx)
+  LogIteratorImpl(std::string& device, int fd, int idx, uint64_t seq)
     : device_(device),
       fd_(fd),
       iter_index_(idx),
+      iter_sequence_(seq),
       valid_(false) {
   }
 
@@ -40,6 +41,7 @@ class LogIteratorImpl : public LogIterator {
   int fd_;
   std::string device_;
   int iter_index_;
+  uint64_t iter_sequence_;
 
   /* only used by next(); and prev() in the future */
   bool valid_;
@@ -79,6 +81,7 @@ class LogIteratorImpl : public LogIterator {
 
     option.timestamp = timestamp;
     option.iter.iter_index = -1;
+    option.iter.iter_sequence = 0;
     option.iter.valid_iter = 0;
     ret = ioctl(fd, IOCTL_CREATE_LOG_ITER, &option);
     if (ret < 0 || option.iter.valid_iter == 0) {
@@ -87,7 +90,7 @@ class LogIteratorImpl : public LogIterator {
       return Status::IOError("ioctl create_log_iter failed\n");
     }
 
-    *log_iter = new LogIteratorImpl(device, fd, option.iter.iter_index);
+    *log_iter = new LogIteratorImpl(device, fd, option.iter.iter_index, option.iter.iter_sequence);
      return s;
   }
 
@@ -96,6 +99,7 @@ LogIteratorImpl::~LogIteratorImpl() {
   int ret = 0;
 
   option.iter_index = iter_index_;
+  option.iter_sequence = iter_sequence_;
   ret = ioctl(fd_, IOCTL_DESTROY_LOG_ITER, &option);
   if (ret < 0) {
     std::cout<<"ioctl destroy_log_iter idx="<<iter_index_<<" failed!\n"<<endl;
@@ -110,6 +114,7 @@ void LogIteratorImpl::Next() {
   int ret = 0;
 
   option.iter.iter_index = iter_index_;
+  option.iter.iter_sequence = iter_sequence_;
   option.iter.valid_iter = 1;
   option.move_direction = LOG_MOVE_NEXT;
   option.valid_key = 0;
@@ -162,6 +167,7 @@ Slice LogIteratorImpl::key() {
   }
 
   option.iter.iter_index = iter_index_;
+  option.iter.iter_sequence = iter_sequence_;
   option.iter.valid_iter = 1;
   option.get_type = LOG_ITER_GET_KEY;
   option.valid_key = 0;
@@ -211,6 +217,7 @@ Slice LogIteratorImpl::value() {
   }
 
   option.iter.iter_index = iter_index_;
+  option.iter.iter_sequence = iter_sequence_;
   option.iter.valid_iter = 1;
   option.get_type = LOG_ITER_GET_VALUE;
   option.valid_key = 0;
