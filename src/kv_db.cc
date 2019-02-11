@@ -111,10 +111,35 @@ Status GetSequenceNumber(std::string& device, uint64_t *sequence)
   option.get_type = GET_DEV_CUR_TIMESTAMP;
   ret = ioctl(fd, IOCTL_GET_TIMESTAMP, &option);
   if (ret < 0) {
-    std::cout<<"ioctl get sequence numver failed!"<<std::endl;
+    std::cout<<"ioctl get sequence number failed!"<<std::endl;
+    close(fd);
     return Status::IOError(strerror(errno));
   }
   *sequence = option.timestamp;
+  close(fd);
+  return s;
+}
+
+Status SetSequenceNumber(std::string& device, uint64_t sequence)
+{
+  Status s;
+  int ret, fd;
+  struct uapi_ts_set_option option;
+
+  fd = open(device.data(), O_RDWR);
+  if (fd < 0) {
+    return Status::NotFound(strerror(errno));
+  }
+
+  memset(&option, 0, sizeof(option));
+  option.timestamp = sequence;
+  option.set_type = SET_DEV_CUR_TIMESTAMP;
+  ret = ioctl(fd, IOCTL_SET_TIMESTAMP, &option);
+  if (ret < 0) {
+    std::cout<<"ioctl set sequence number failed!"<<std::endl;
+    close(fd);
+    return Status::IOError(strerror(errno));
+  }
   close(fd);
   return s;
 }

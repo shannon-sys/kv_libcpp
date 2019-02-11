@@ -255,6 +255,12 @@ struct uapi_ts_get_option {
 	unsigned long get_type;
 };
 
+struct uapi_ts_set_option {
+	__u64 timestamp;
+#define SET_DEV_CUR_TIMESTAMP       1
+	unsigned long set_type;
+};
+
 struct uapi_log_iterator {
 	int iter_index;
 	int valid_iter;

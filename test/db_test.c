@@ -34,6 +34,9 @@ int main (int argc,char * argv[])
 	status = shannon::GetSequenceNumber(dbpath, &ts1);
 	assert(status.ok());
 	std::cout << "timestamp1=" << ts1 << std::endl;
+	ts1 += 100;
+	status = shannon::SetSequenceNumber(dbpath, ts1);
+	assert(status.ok());
 
 	printf("db:%p\n",db);
 	status = db->Put(shannon::WriteOptions(), "hello", "world");
@@ -50,6 +53,8 @@ int main (int argc,char * argv[])
 	status = shannon::GetSequenceNumber(dbpath, &ts2);
 	assert(status.ok() && (ts2 - ts1 == 2));
 	std::cout << "timestamp2=" << ts2 << std::endl;
+	status = shannon::SetSequenceNumber(dbpath, ts2);
+	assert(!status.ok());
 
 	WriteBatch batch;
 	batch.Put("batch1", Slice("mybatchtest"));

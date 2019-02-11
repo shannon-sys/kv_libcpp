@@ -61,6 +61,7 @@ enum {
 	DESTROY_LOG_ITER_CMD,
 	LOG_ITER_MOVE_CMD,
 	LOG_ITER_GET_CMD,
+	SET_TIMESTAMP_CMD,
 };
 
 
@@ -109,6 +110,7 @@ enum {
 #define IOCTL_ITERATOR_GET     _IOWR(VENICE_KV_IOCTL_FLAGS, ITERATOR_GET_CMD, struct uapi_iter_get_option)
 
 #define IOCTL_GET_TIMESTAMP     _IOWR(VENICE_KV_IOCTL_FLAGS, GET_TIMESTAMP_CMD, struct uapi_ts_get_option)
+#define IOCTL_SET_TIMESTAMP     _IOWR(VENICE_KV_IOCTL_FLAGS, SET_TIMESTAMP_CMD, struct uapi_ts_set_option)
 #define IOCTL_CREATE_LOG_ITER   _IOWR(VENICE_KV_IOCTL_FLAGS, CREATE_LOG_ITER_CMD, struct uapi_log_iter_create)
 #define IOCTL_DESTROY_LOG_ITER  _IOWR(VENICE_KV_IOCTL_FLAGS, DESTROY_LOG_ITER_CMD, struct uapi_log_iterator)
 #define IOCTL_LOG_ITER_MOVE     _IOWR(VENICE_KV_IOCTL_FLAGS, LOG_ITER_MOVE_CMD, struct uapi_log_iter_move_option)

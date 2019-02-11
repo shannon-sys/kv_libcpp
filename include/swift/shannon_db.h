@@ -234,6 +234,7 @@ class ColumnFamilyHandle {
 };
 
 Status GetSequenceNumber(std::string& device, uint64_t *sequence);
+Status SetSequenceNumber(std::string& device, uint64_t sequence);
 
 }  // namespace shannon
 
