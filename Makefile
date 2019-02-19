@@ -19,6 +19,8 @@ sst_test:test/sst_test.cc
 	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -I${HEAD} -g $^ -o $@ -l${Target}
 log_iter_test:test/log_iter_test.cc
 	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -I${HEAD} -g $^ -o $@ -l${Target}
+log_iter_thread_test:test/log_iter_thread_test.cc
+	LD_RUN_PATH=. g++ $(CXXFLAGS) -l${Target} -lpthread -I${HEAD} -g $^ -o $@ -l${Target} -lpthread
 uninstall:
 	sudo rm -rf /usr/include/swift
 
