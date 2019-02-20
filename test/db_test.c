@@ -97,7 +97,7 @@ int main (int argc,char * argv[])
 	Iterator *iter = db->NewIterator(shannon::ReadOptions());
 	for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
 		std::cout << iter->key().ToString() << "->"
-			<< iter->value().ToString() << std::endl;
+			<< iter->value().ToString() << "->"<< iter->timestamp()<< std::endl;
 	}
 	iter->Seek("batch2");
 	value = iter->value().ToString();

@@ -28,6 +28,7 @@ class KVIter: public Iterator {
   virtual bool Valid() const { return valid_; }
   virtual Slice key();
   virtual Slice value();
+  virtual uint64_t timestamp();
   virtual Status status() const {
       return status_;
   }
@@ -48,6 +49,7 @@ class KVIter: public Iterator {
   Status status_;
   std::string saved_key_;
   std::string saved_value_;
+  uint64_t cur_timestamp_;
   int direction_;
   bool valid_;
   char prefix_[256];
@@ -330,6 +332,31 @@ Slice KVIter::value() {
   }
   free(get.value);
   return saved_value_;
+}
+
+uint64_t KVIter::timestamp() {
+  struct uapi_iter_get_option get;
+  int ret;
+
+  memset(&get, 0, sizeof(struct uapi_iter_get_option));
+  status_ = Status();
+  saved_key_.clear();
+  get.iter.db_index = db_->db_;
+  get.iter.timestamp = timestamp_;
+  get.iter.iter_index = index_;
+  get.iter.cf_index = cf_index_;
+  get.get_type = ITER_GET_KEY;
+  get.key = (char *) malloc(MAX_KEY_SIZE);
+  get.key_buf_len = MAX_KEY_SIZE;
+  ret = ioctl(db_->fd_, IOCTL_ITERATOR_GET, &get);
+  if (ret < 0) {
+    status_ = Status::IOError("Iter Get timestamp Failed", strerror(errno));
+  }
+  else {
+    cur_timestamp_ = get.timestamp;
+  }
+  free(get.key);
+  return cur_timestamp_;
 }
 
 Iterator* NewDBIterator(

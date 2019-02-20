@@ -54,6 +54,7 @@ class Iterator {
   // REQUIRES: !AtEnd() && !AtStart()
   virtual Slice value() = 0;
 
+  virtual uint64_t timestamp() = 0;
   // If an error has occurred, return it.  Else return an ok status.
   virtual Status status() const = 0;
 
