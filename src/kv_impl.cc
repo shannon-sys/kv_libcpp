@@ -335,6 +335,29 @@ namespace shannon {
     return AnalyzeSst(sst_filename, verify, this, NULL);
   }
 
+  Status KVImpl::BuildTable(char *filename, std::vector<ColumnFamilyHandle*> &handles, std::vector<Iterator*> &iterators)
+  {
+    Status s;
+    if ((handles.size() == 0) || (iterators.size() == 0)) {
+      cerr << "handles  or iterators  size is 0!" <<endl;
+      return Status::Corruption("handles is NULL!\n");
+    }
+    if (handles.size() != iterators.size()) {
+      cerr << "handles.size = " << handles.size()<< "iterators size = "<< iterators.size()<< "is err!"<<endl;
+      return Status::Corruption("size is err!\n");
+    }
+    if (!env_->FileExists(string(filename))) {
+        s = env_->CreateDir(filename);
+    }
+    if (!s.ok()) {
+        return s;
+    }
+    for(int i = 0; i <= handles.size() - 1; i++) {
+       s = BuildSst(filename, env_, options_, handles[i], iterators[i], handles[i]->GetID(), handles[i]->GetName().c_str());
+    }
+    return s;
+  }
+
   const Snapshot* KVImpl::GetSnapshot() {
     struct uapi_snapshot snap;
     int ret = 0;

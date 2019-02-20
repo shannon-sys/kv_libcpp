@@ -3,27 +3,30 @@
 // found in the LICENSE file. See the AUTHORS file for names of contributors.
 //
 
-#include <stdlib.h>
-#include <iostream>
-#include <stdio.h>
-#include <fcntl.h>
-#include <error.h>
-#include <snappy-c.h>
-#include "../util/coding.h"
-#include "../util/crc32c.h"
-#include "../util/fileoperate.h"
-#include "../util/xxhash.h"
-#include "swift/slice.h"
+#include "sst_table.h"
+#include "block_builder.h"
+#include "dbformat.h"
+#include "swift/env.h"
 #include "swift/options.h"
+#include "swift/slice.h"
 #include "swift/status.h"
 #include "swift/write_batch.h"
-#include "sst_table.h"
-
+#include "table_builder.h"
+#include "util/coding.h"
+#include "util/crc32c.h"
+#include "util/filename.h"
+#include "util/fileoperate.h"
+#include "util/xxhash.h"
+#include <error.h>
+#include <fcntl.h>
+#include <iostream>
+#include <snappy-c.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace shannon {
 
-static void KvNodeDestroy(KvNode *kv)
-{
+static void KvNodeDestroy(KvNode *kv) {
   if (kv) {
     if (kv->key)
       free(kv->key);
@@ -33,12 +36,11 @@ static void KvNodeDestroy(KvNode *kv)
   }
 }
 
-Status BlockHandleDecodeFrom(BlockHandle *dst, Slice *input)
-{
+Status BlockHandleDecodeFrom(BlockHandle *dst, Slice *input) {
   Status s;
-  if (GetVarint64(input, &dst->offset) &&
-      GetVarint64(input, &dst->size) && dst->size > 0) {
-    //DEBUG("offset=%llu, size=%llu\n", dst->offset, dst->size);
+  if (GetVarint64(input, &dst->offset) && GetVarint64(input, &dst->size) &&
+      dst->size > 0) {
+    // DEBUG("offset=%llu, size=%llu\n", dst->offset, dst->size);
     return s;
   } else {
     DEBUG("Error: bad block handle\n");
@@ -46,15 +48,13 @@ Status BlockHandleDecodeFrom(BlockHandle *dst, Slice *input)
   }
 }
 
-Status FootDecodeFrom(Foot *dst, Slice *input, int verify)
-{
+Status FootDecodeFrom(Foot *dst, Slice *input, int verify) {
   Status s;
-  const char* magic_ptr = input->data() + kNewVersionEncodedLenFoot - 8;
+  const char *magic_ptr = input->data() + kNewVersionEncodedLenFoot - 8;
   size_t delta = kNewVersionEncodedLenFoot - kEncodedLenFoot;
   uint32_t magic_lo = DecodeFixed32(magic_ptr);
   uint32_t magic_hi = DecodeFixed32(magic_ptr + 4);
-  uint64_t magic = ((uint64_t)(magic_hi) << 32) |
-                    ((uint64_t)(magic_lo));
+  uint64_t magic = ((uint64_t)(magic_hi) << 32) | ((uint64_t)(magic_lo));
   const char *end = magic_ptr + 8;
 
   if (magic == kBasedTableMagicNumber) {
@@ -85,8 +85,7 @@ Status FootDecodeFrom(Foot *dst, Slice *input, int verify)
   return s;
 }
 
-Status ReadFoot(Slice *result, char *filename)
-{
+Status ReadFoot(Slice *result, char *filename) {
   ssize_t read_size = 0;
   size_t file_size = 0;
   uint64_t offset = 0;
@@ -98,7 +97,7 @@ Status ReadFoot(Slice *result, char *filename)
     DEBUG("corruption sst file, file len is too small\n");
     return Status::Corruption("sst file is too small");
   }
-  offset = (uint64_t)(file_size) - size;
+  offset = (uint64_t)(file_size)-size;
   read_size = ReadFile(filename, offset, size, result);
   if (read_size != size)
     s = Status::IOError("read sst file foot error");
@@ -106,27 +105,26 @@ Status ReadFoot(Slice *result, char *filename)
   return s;
 }
 
-static Status CheckBlockChecksum(Slice *input, uint8_t checksum_type)
-{
+static Status CheckBlockChecksum(Slice *input, uint8_t checksum_type) {
   const char *data = input->data();
   size_t n = input->size() - kBlockTrailerSize;
   uint32_t value, actual;
   Status s;
 
   switch (checksum_type) {
-    case kNoChecksum:
-      break;
-    case kCRC32c:
-      value = crc32c::Unmask(DecodeFixed32(data + n + 1));
-      actual = crc32c::Value(data, n + 1);
-      break;
-    case kxxHash:
-      value = DecodeFixed32(data + n + 1);
-      actual = XXH32(data, n + 1, 0);
-      break;
-    default:
-      DEBUG("unknown checksum type:%u\n", (uint32_t)checksum_type);
-      return Status::NotSupported("unknown checksum type");
+  case kNoChecksum:
+    break;
+  case kCRC32c:
+    value = crc32c::Unmask(DecodeFixed32(data + n + 1));
+    actual = crc32c::Value(data, n + 1);
+    break;
+  case kxxHash:
+    value = DecodeFixed32(data + n + 1);
+    actual = XXH32(data, n + 1, 0);
+    break;
+  default:
+    DEBUG("unknown checksum type:%u\n", (uint32_t)checksum_type);
+    return Status::NotSupported("unknown checksum type");
   }
 
   if (checksum_type == kNoChecksum || actual == value)
@@ -137,39 +135,38 @@ static Status CheckBlockChecksum(Slice *input, uint8_t checksum_type)
   }
 }
 
-static Status UncompressBlock(Slice *result, Slice *input)
-{
+static Status UncompressBlock(Slice *result, Slice *input) {
   char *data = (char *)input->data(), *ubuf = NULL;
   size_t n = input->size() - kBlockTrailerSize, ulength = 0;
   Status s;
 
   switch (data[n]) {
-    case kNoCompression:
-       *result = Slice(data, n);
-       break;
-    case kSnappyCompression:
-       if (snappy_uncompressed_length(data, n, &ulength) != SNAPPY_OK) {
-         DEBUG("uncompressed block contents\n");
-         return Status::Corruption("uncompressed block fail");
-       }
-       ubuf = (char *)malloc(ulength);
-       if (snappy_uncompress(data, n, ubuf, &ulength) != SNAPPY_OK) {
-         if (ubuf)
-           free(ubuf);
-         DEBUG("corrupted uncompressed block contents\n");
-         return Status::Corruption("uncompressed block fail");
-       }
-       *result = Slice(ubuf, ulength);
-       break;
-    default:
-       DEBUG("unknown block compress type, type=%d\n", (int)data[n]);
-       return Status::NotSupported("unknow block compress type");
+  case kNoCompression:
+    *result = Slice(data, n);
+    break;
+  case kSnappyCompression:
+    if (snappy_uncompressed_length(data, n, &ulength) != SNAPPY_OK) {
+      DEBUG("uncompressed block contents\n");
+      return Status::Corruption("uncompressed block fail");
+    }
+    ubuf = (char *)malloc(ulength);
+    if (snappy_uncompress(data, n, ubuf, &ulength) != SNAPPY_OK) {
+      if (ubuf)
+        free(ubuf);
+      DEBUG("corrupted uncompressed block contents\n");
+      return Status::Corruption("uncompressed block fail");
+    }
+    *result = Slice(ubuf, ulength);
+    break;
+  default:
+    DEBUG("unknown block compress type, type=%d\n", (int)data[n]);
+    return Status::NotSupported("unknow block compress type");
   }
   return s;
 }
 
-Status CheckAndUncompressBlock(Slice *result, Slice *input, uint8_t checksum_type)
-{
+Status CheckAndUncompressBlock(Slice *result, Slice *input,
+                               uint8_t checksum_type) {
   Status s;
   s = CheckBlockChecksum(input, checksum_type);
   if (s.ok())
@@ -178,13 +175,14 @@ Status CheckAndUncompressBlock(Slice *result, Slice *input, uint8_t checksum_typ
 }
 
 // block is data block, meta block, meta index block or index block
-Status ReadBlock(Slice *result, char *filename, BlockHandle *handle, uint8_t checksum_type)
-{
+Status ReadBlock(Slice *result, char *filename, BlockHandle *handle,
+                 uint8_t checksum_type) {
   ssize_t read_size = 0;
   Slice file_content;
   Status s;
 
-  read_size = ReadFile(filename, handle->offset, handle->size + kBlockTrailerSize, &file_content);
+  read_size = ReadFile(filename, handle->offset,
+                       handle->size + kBlockTrailerSize, &file_content);
   if (read_size == 0 || read_size != handle->size + kBlockTrailerSize) {
     s = Status::IOError();
     goto out;
@@ -203,8 +201,7 @@ out:
   return s;
 }
 
-static Status GetDataBlockRestartNums(uint32_t *nums, Slice *data_block)
-{
+static Status GetDataBlockRestartNums(uint32_t *nums, Slice *data_block) {
   const char *data = data_block->data();
   size_t n = data_block->size() - 4;
 
@@ -221,8 +218,7 @@ static Status GetDataBlockRestartNums(uint32_t *nums, Slice *data_block)
   return Status::OK();
 }
 
-Status GetDataBlockRestartOffset(BlockRep *rep)
-{
+Status GetDataBlockRestartOffset(BlockRep *rep) {
   Slice data_block = Slice(rep->block.data(), rep->block.size());
   uint32_t *restarts = &rep->restart_nums;
   uint32_t **restart_offset = &rep->restart_offset;
@@ -266,8 +262,7 @@ free_restart_offset:
 }
 
 static Status DecodeDataBlockOneRecord(KvNode *kv, Slice *input,
-                KvNode *last_kv, bool key_is_user_key)
-{
+                                       KvNode *last_kv, bool key_is_user_key) {
   uint32_t internal_shared_key_len, internal_non_shared_key_len;
   uint32_t internal_key_len, value_len;
   char *last_key = (last_kv) ? last_kv->key : NULL;
@@ -305,7 +300,8 @@ static Status DecodeDataBlockOneRecord(KvNode *kv, Slice *input,
     }
     memcpy(internal_key, last_key, internal_shared_key_len);
   }
-  memcpy(internal_key + internal_shared_key_len, input->data(), internal_non_shared_key_len);
+  memcpy(internal_key + internal_shared_key_len, input->data(),
+         internal_non_shared_key_len);
 
   // update input
   *input = Slice(input->data() + internal_non_shared_key_len,
@@ -356,8 +352,8 @@ static Status DecodeDataBlockOneRecord(KvNode *kv, Slice *input,
     memcpy(kv->value, input->data(), kv->value_len);
     kv->value[kv->value_len] = '\0';
     // update input
-    *input = Slice(input->data() + kv->value_len,
-                   input->size() - kv->value_len);
+    *input =
+        Slice(input->data() + kv->value_len, input->size() - kv->value_len);
   }
   return s;
 
@@ -373,8 +369,7 @@ out:
   return s;
 }
 
-static Status BatchWriteAndClearNonatomic(DatabaseOptions* opt)
-{
+static Status BatchWriteAndClearNonatomic(DatabaseOptions *opt) {
   Status s;
   DB *db = opt->db;
   WriteBatchNonatomic *wb = opt->wb;
@@ -385,8 +380,7 @@ static Status BatchWriteAndClearNonatomic(DatabaseOptions* opt)
   return s;
 }
 
-Status ProcessOneKv(BlockRep *rep, KvNode *kv)
-{
+Status ProcessOneKv(BlockRep *rep, KvNode *kv) {
   Status s;
   DatabaseOptions *opt = NULL;
   Slice key, value;
@@ -415,7 +409,7 @@ Status ProcessOneKv(BlockRep *rep, KvNode *kv)
   if (kv->type == kTypeValue && kv->key && kv->value) {
     key = Slice((const char *)kv->key, kv->key_len);
     value = Slice((const char *)kv->value, kv->value_len);
-batch_put_try:
+  batch_put_try:
     if (opt->cf == NULL)
       s = opt->wb->Put(key, value, kv->sequence);
     else
@@ -435,7 +429,7 @@ batch_put_try:
     rep->kv_put_count++;
   } else if (kv->type == kTypeDeletion && kv->key) {
     key = Slice((const char *)kv->key, kv->key_len);
-batch_delete_try:
+  batch_delete_try:
     if (opt->cf == NULL)
       s = opt->wb->Delete(key, kv->sequence);
     else
@@ -463,8 +457,7 @@ out:
   return s;
 }
 
-Status DecodeDataBlockRestartInterval(BlockRep *rep, int index)
-{
+Status DecodeDataBlockRestartInterval(BlockRep *rep, int index) {
   Slice interval;
   char *data;
   size_t size;
@@ -488,7 +481,7 @@ Status DecodeDataBlockRestartInterval(BlockRep *rep, int index)
 
   data = (char *)rep->block.data() + rep->restart_offset[index];
   if (index + 1 < rep->restart_nums)
-    size = rep->restart_offset[index+1] - rep->restart_offset[index];
+    size = rep->restart_offset[index + 1] - rep->restart_offset[index];
   else
     size = rep->data_size - rep->restart_offset[index];
   interval = Slice((const char *)data, size);
@@ -517,8 +510,7 @@ free_kv:
   return s;
 }
 
-Status DecodeDataBlock(BlockRep *rep)
-{
+Status DecodeDataBlock(BlockRep *rep) {
   int nums = 0, i;
   Status s;
 
@@ -540,20 +532,17 @@ Status DecodeDataBlock(BlockRep *rep)
   return s;
 }
 
-Status GetIndexBlockRestartOffset(BlockRep *rep)
-{
+Status GetIndexBlockRestartOffset(BlockRep *rep) {
   return GetDataBlockRestartOffset(rep);
 }
 
-static Status DecodeIndexBlockOneRecord(KvNode *kv, Slice *input)
-{
+static Status DecodeIndexBlockOneRecord(KvNode *kv, Slice *input) {
   // if key is not user key, we do not use sequence
   // so can force key_is_user_key=true
   return DecodeDataBlockOneRecord(kv, input, NULL, true);
 }
 
-Status ProcessOneBlockHandle(BlockRep *rep, KvNode *kv)
-{
+Status ProcessOneBlockHandle(BlockRep *rep, KvNode *kv) {
   BlockHandle block_handle;
   Slice value(kv->value, kv->value_len);
   BlockRep *data_block_rep;
@@ -575,8 +564,8 @@ Status ProcessOneBlockHandle(BlockRep *rep, KvNode *kv)
   data_block_rep->opt = rep->opt;
   data_block_rep->checksum_type = rep->checksum_type;
   data_block_rep->last_data_block = rep->last_data_block;
-  s = ReadBlock(&data_block_rep->block, data_block_rep->filename,
-                &block_handle, data_block_rep->checksum_type);
+  s = ReadBlock(&data_block_rep->block, data_block_rep->filename, &block_handle,
+                data_block_rep->checksum_type);
   if (!s.ok())
     goto free_data_block_rep;
   s = DecodeDataBlock(data_block_rep);
@@ -598,8 +587,7 @@ free_data_block_rep:
   return s;
 }
 
-Status DecodeIndexBlockRestartInterval(BlockRep *rep, int index)
-{
+Status DecodeIndexBlockRestartInterval(BlockRep *rep, int index) {
   Slice interval;
   KvNode kv;
   Status s;
@@ -609,7 +597,7 @@ Status DecodeIndexBlockRestartInterval(BlockRep *rep, int index)
   memset(&kv, 0, sizeof(KvNode));
   data = (char *)rep->block.data() + rep->restart_offset[index];
   if (index + 1 < rep->restart_nums)
-    size = rep->restart_offset[index+1] - rep->restart_offset[index];
+    size = rep->restart_offset[index + 1] - rep->restart_offset[index];
   else
     size = rep->data_size - rep->restart_offset[index];
   interval = Slice((const char *)data, size);
@@ -634,8 +622,7 @@ free_kv:
   return s;
 }
 
-Status DecodeIndexBlock(BlockRep *rep)
-{
+Status DecodeIndexBlock(BlockRep *rep) {
   int nums = 0, i;
   Status s;
 
@@ -655,18 +642,16 @@ Status DecodeIndexBlock(BlockRep *rep)
   return s;
 }
 
-static Status GetPropertyBlockRestartOffset(BlockRep *rep)
-{
+static Status GetPropertyBlockRestartOffset(BlockRep *rep) {
   return GetDataBlockRestartOffset(rep);
 }
 
-static Status DecodePropertyBlockOneRecord(KvNode *kv, Slice *input, KvNode *last_kv)
-{
+static Status DecodePropertyBlockOneRecord(KvNode *kv, Slice *input,
+                                           KvNode *last_kv) {
   return DecodeDataBlockOneRecord(kv, input, last_kv, true);
 }
 
-static Status ProcessOnePropertyKv(BlockRep *rep, KvNode *kv, int *find)
-{
+static Status ProcessOnePropertyKv(BlockRep *rep, KvNode *kv, int *find) {
   Status s;
 
   // case: column family name
@@ -691,8 +676,7 @@ static Status ProcessOnePropertyKv(BlockRep *rep, KvNode *kv, int *find)
   return s;
 }
 
-Status DecodePropertyBlock(BlockRep *rep)
-{
+Status DecodePropertyBlock(BlockRep *rep) {
   Slice my_block = Slice(rep->block.data(), rep->block.size());
   KvNode *kv, *last_kv, *tmp_kv;
   Status s;
@@ -716,7 +700,7 @@ Status DecodePropertyBlock(BlockRep *rep)
   s = GetPropertyBlockRestartOffset(rep);
   if (!s.ok())
     goto free_last_kv;
-  my_block =  Slice(rep->block.data(), rep->data_size);
+  my_block = Slice(rep->block.data(), rep->data_size);
 
   while (my_block.size() > 0) {
     s = DecodePropertyBlockOneRecord(kv, &my_block, last_kv);
@@ -737,8 +721,7 @@ Status DecodePropertyBlock(BlockRep *rep)
     memset(kv, 0, sizeof(KvNode));
   }
 
-  if (s.ok() && find < kProperties &&
-      strlen(rep->props->cf_name) == 0) {
+  if (s.ok() && find < kProperties && strlen(rep->props->cf_name) == 0) {
     DEBUG("Can not find cf_name in property meta block\n");
     s = Status::NotFound("Can not find cf_name in property meta block");
   }
@@ -750,18 +733,16 @@ free_kv:
   return s;
 }
 
-static Status GetMetaIndexBlockRestartOffset(BlockRep *rep)
-{
+static Status GetMetaIndexBlockRestartOffset(BlockRep *rep) {
   return GetDataBlockRestartOffset(rep);
 }
 
-static Status DecodeMetaIndexBlockOneRecord(KvNode *kv, Slice *input, KvNode *last_kv)
-{
+static Status DecodeMetaIndexBlockOneRecord(KvNode *kv, Slice *input,
+                                            KvNode *last_kv) {
   return DecodeDataBlockOneRecord(kv, input, last_kv, true);
 }
 
-static bool IsPropertyBlock(char *key, int len)
-{
+static bool IsPropertyBlock(char *key, int len) {
   if (strlen(kPropertiesBlock) == len &&
       strncmp(kPropertiesBlock, key, len) == 0)
     return true;
@@ -771,8 +752,7 @@ static bool IsPropertyBlock(char *key, int len)
   return false;
 }
 
-static Status ProcessOneMetaIndexKv(BlockRep *rep, KvNode *kv, int *find)
-{
+static Status ProcessOneMetaIndexKv(BlockRep *rep, KvNode *kv, int *find) {
   BlockHandle block_handle;
   Slice value(kv->value, kv->value_len);
   BlockRep *meta_block_rep;
@@ -798,8 +778,8 @@ static Status ProcessOneMetaIndexKv(BlockRep *rep, KvNode *kv, int *find)
   meta_block_rep->opt = rep->opt;
   meta_block_rep->checksum_type = rep->checksum_type;
   meta_block_rep->props = rep->props;
-  s = ReadBlock(&meta_block_rep->block, meta_block_rep->filename,
-                &block_handle, meta_block_rep->checksum_type);
+  s = ReadBlock(&meta_block_rep->block, meta_block_rep->filename, &block_handle,
+                meta_block_rep->checksum_type);
   if (!s.ok())
     goto free_meta_block_rep;
   s = DecodePropertyBlock(meta_block_rep);
@@ -816,8 +796,7 @@ free_meta_block_rep:
   return s;
 }
 
-Status DecodeMetaIndexBlock(BlockRep *rep)
-{
+Status DecodeMetaIndexBlock(BlockRep *rep) {
   Slice my_block = Slice(rep->block.data(), rep->block.size());
   KvNode *kv, *last_kv, *tmp_kv;
   Status s;
@@ -841,7 +820,7 @@ Status DecodeMetaIndexBlock(BlockRep *rep)
   s = GetMetaIndexBlockRestartOffset(rep);
   if (!s.ok())
     goto free_last_kv;
-  my_block =  Slice(rep->block.data(), rep->data_size);
+  my_block = Slice(rep->block.data(), rep->data_size);
 
   while (my_block.size() > 0) {
     s = DecodeMetaIndexBlockOneRecord(kv, &my_block, last_kv);
@@ -874,8 +853,8 @@ free_kv:
   return s;
 }
 
-Status ProcessMetaIndex(char *filename, MetaBlockProperties *props, Foot *foot)
-{
+Status ProcessMetaIndex(char *filename, MetaBlockProperties *props,
+                        Foot *foot) {
   BlockHandle block_handle;
   BlockRep meta_index_block_rep;
   Status s;
@@ -884,8 +863,8 @@ Status ProcessMetaIndex(char *filename, MetaBlockProperties *props, Foot *foot)
   meta_index_block_rep.props = props;
   meta_index_block_rep.checksum_type = foot->checksum_type;
   // read meta index block and decode property block
-  s = ReadBlock(&meta_index_block_rep.block, filename,
-                &foot->metaindex_handle, foot->checksum_type);
+  s = ReadBlock(&meta_index_block_rep.block, filename, &foot->metaindex_handle,
+                foot->checksum_type);
   if (s.ok())
     s = DecodeMetaIndexBlock(&meta_index_block_rep);
 
@@ -896,12 +875,11 @@ Status ProcessMetaIndex(char *filename, MetaBlockProperties *props, Foot *foot)
   return s;
 }
 
-Status FindCFHandleIndex(std::vector<ColumnFamilyHandle *> *handles,
-                       char *name, int name_len, int *index)
-{
+Status FindCFHandleIndex(std::vector<ColumnFamilyHandle *> *handles, char *name,
+                         int name_len, int *index) {
   Status s;
   int i = 0, n;
-  std:: string cf_name;
+  std::string cf_name;
   *index = -1;
 
   n = (*handles).size();
@@ -916,15 +894,16 @@ Status FindCFHandleIndex(std::vector<ColumnFamilyHandle *> *handles,
   }
 
   if (*index == -1) {
-    DEBUG("can not find column_family=%s, please check your handles or create it before.\n", name);
+    DEBUG("can not find column_family=%s, please check your handles or create "
+          "it before.\n",
+          name);
     return Status::NotFound("can not find column family");
   }
 
   return s;
 }
 
-static Status IsIndexTypeSupport(IndexType index_type)
-{
+static Status IsIndexTypeSupport(IndexType index_type) {
   Status s;
 
   switch (index_type) {
@@ -937,8 +916,7 @@ static Status IsIndexTypeSupport(IndexType index_type)
 }
 
 Status AnalyzeSst(char *filename, int verify, DB *db,
-         std::vector<ColumnFamilyHandle *> *handles)
-{
+                  std::vector<ColumnFamilyHandle *> *handles) {
   Status s;
   Slice foot_content, tmp_foot_content;
   Foot foot;
@@ -968,7 +946,7 @@ Status AnalyzeSst(char *filename, int verify, DB *db,
     goto free_foot_content;
   index_block_rep.checksum_type = foot.checksum_type;
 
-  //set db_opt
+  // set db_opt
   db_opt.db = db;
   db_opt.wb = &wb;
   db_opt.write_opt.sync = true;
@@ -982,8 +960,8 @@ Status AnalyzeSst(char *filename, int verify, DB *db,
     DEBUG("decode meta index block in file=%s\n", filename);
     s = ProcessMetaIndex(filename, &props, &foot);
     if (s.ok())
-      s = FindCFHandleIndex(handles, props.cf_name,
-            strlen(props.cf_name), &cf_handle_index);
+      s = FindCFHandleIndex(handles, props.cf_name, strlen(props.cf_name),
+                            &cf_handle_index);
     if (s.ok())
       s = IsIndexTypeSupport(IndexType(props.index_type));
     if (!s.ok())
@@ -994,14 +972,13 @@ Status AnalyzeSst(char *filename, int verify, DB *db,
 
   // read index block and decode each data block
   DEBUG("decode index block in file=%s\n", filename);
-  s = ReadBlock(&index_block_rep.block, filename,
-                  &foot.index_handle, foot.checksum_type);
+  s = ReadBlock(&index_block_rep.block, filename, &foot.index_handle,
+                foot.checksum_type);
   if (!s.ok())
     goto free_foot_content;
   s = DecodeIndexBlock(&index_block_rep);
   DEBUG("total decode cout: data_block=%u, kv_put=%u, kv_del=%u\n",
-        index_block_rep.data_block_count,
-        index_block_rep.kv_put_count,
+        index_block_rep.data_block_count, index_block_rep.kv_put_count,
         index_block_rep.kv_del_count);
 
 free_rep_restart_offset:
@@ -1017,4 +994,55 @@ out:
   return s;
 }
 
-}  // namespace shannon
+Status BuildSst(const std::string dbname, Env *env, const DBOptions options,
+                ColumnFamilyHandle *handle, Iterator *iter, int number,
+                const char *cfname) {
+  Status s;
+  uint64_t file_size = 0;
+  uint64_t creation_time = 0;
+  uint64_t oldest_key_time = 0;
+  iter->SeekToFirst();
+  creation_time = iter->timestamp();
+  std::string fname = TableFileName(dbname, number, cfname);
+  if (iter->Valid()) {
+    WritableFile *file;
+    s = env->NewWritableFile(fname, &file);
+    if (!s.ok()) {
+      return s;
+    }
+    TableBuilder *builder =
+        new TableBuilder(Options(), file, handle->GetName(), handle->GetID());
+    for (; iter->Valid(); iter->Next()) {
+      const Slice key(iter->key().data());
+      const Slice value(iter->value().data());
+      string result;
+      AppendInternalKey(&result,
+                        ParsedInternalKey(key, iter->timestamp(), kTypeValue));
+      const Slice add_key(result);
+      builder->Add(add_key, value);
+    }
+    oldest_key_time = iter->timestamp();
+    s = builder->Finish(creation_time, oldest_key_time);
+    if (s.ok()) {
+      file_size = builder->FileSize();
+    }
+    delete builder;
+    if (s.ok()) {
+      s = file->Sync();
+    }
+    if (s.ok()) {
+      s = file->Close();
+    }
+    delete file;
+    file = NULL;
+  }
+
+  if (s.ok() && file_size > 0) {
+    // keep it
+  } else {
+    env->DeleteFile(fname);
+  }
+  return s;
+}
+
+} // namespace shannon

@@ -1,6 +1,3 @@
-// Copyright (c) 2018 The Shannon Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file. See the AUTHORS file for names of contributors.
 
 #ifndef SHANNON_DB_INCLUDE_OPTIONS_H_
 #define SHANNON_DB_INCLUDE_OPTIONS_H_
@@ -40,6 +37,13 @@ struct DBOptions {
   size_t max_manifest_file_size = 64 * 1024 * 1024;
   size_t max_log_file_size = 0;
   size_t write_buffer_size = 64 << 20;
+//build_sst
+  size_t block_size = 4096;
+  int block_restart_interval = 16;
+  size_t max_file_size = 2 * 1024 * 1024;
+//NULL
+  FilterPolicy* filter_policy = NULL;
+
   size_t target_file_size_base = 64 * 1048576;
   int max_background_flushes = -1;
   int max_background_compactions = -1;
@@ -47,7 +51,7 @@ struct DBOptions {
   int max_bytes_for_level_multiplier = -1;
   int optimize_filters_for_hits = -1;
   int level_compaction_dynamic_level_bytes = -1;
-  CompressionType compression;
+  CompressionType compression = kNoCompression;
   Env* env = Env::Default();
   DBOptions(){}
 };
@@ -109,7 +113,6 @@ struct WriteOptions {
         fill_cache(true) {
   }
 };
-
 struct CompactRangeOptions {
   bool exclusive_manual_compaction = true;
   bool change_level = false;

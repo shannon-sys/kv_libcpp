@@ -5,32 +5,27 @@
 #ifndef STORAGE_SHANNONDB_INCLUDE_SST_H_
 #define STORAGE_SHANNONDB_INCLUDE_SST_H_
 
+#include "src/column_family.h"
+#include "src/venice_macro.h"
+#include "swift/options.h"
+#include "swift/shannon_db.h"
+#include "swift/slice.h"
+#include "swift/status.h"
+#include "swift/table.h"
 #include <stdint.h>
 #include <string.h>
 #include <string>
 #include <vector>
-#include "src/venice_macro.h"
-#include "swift/slice.h"
-#include "swift/status.h"
-#include "swift/options.h"
-#include "swift/table.h"
-#include "swift/shannon_db.h"
-#include "src/column_family.h"
 
 namespace shannon {
 
 #define DEBUG_CONFIG
 #ifdef DEBUG_CONFIG
-#define DEBUG(format, arg...) \
+#define DEBUG(format, arg...)                                                  \
   printf("%s(), line=%d: " format, __FUNCTION__, __LINE__, ##arg)
 #else
 #define DEBUG(format, arg...)
 #endif /* end of #ifdef DEBUG_CONFIG */
-
-enum {
-  kTypeDeletion = 0, // value type
-  kTypeValue = 1
-};
 
 struct KvNode {
   char *key;
@@ -45,12 +40,12 @@ struct KvNode {
 // (64 + (7 - 1)) / 7 = 10
 enum {
   kMaxEncodedLenBlockHandle = 20,
-  kEncodedLenFoot = 48, // 2 * 20 + 8 leveldb
+  kEncodedLenFoot = 48,           // 2 * 20 + 8 leveldb
   kNewVersionEncodedLenFoot = 53, // 1 + 20 *2 + 4 +8 rocksdb
-  kBlockTrailerSize = 5  // 1type + 4B CRC
+  kBlockTrailerSize = 5           // 1type + 4B CRC
 };
 #define kLegacyTableMagicNumber 0xdb4775248b80fb57ull // leveldb
-#define kBasedTableMagicNumber 0x88e241b785f4cff7ull //rocksdb
+#define kBasedTableMagicNumber 0x88e241b785f4cff7ull  // rocksdb
 
 struct BlockHandle {
   uint64_t offset;
@@ -93,7 +88,7 @@ struct BlockRep {
   uint32_t restart_nums;
   uint32_t *restart_offset;
   uint32_t data_size; // except restarts_offset and restart_num
-  Slice block; // uncompressed content
+  Slice block;        // uncompressed content
   char *filename;
   uint8_t checksum_type;
   uint8_t last_data_block;
@@ -108,8 +103,10 @@ struct BlockRep {
 extern Status BlockHandleDecodeFrom(BlockHandle *dst, Slice *input);
 extern Status FootDecodeFrom(Foot *dst, Slice *input, int verify);
 extern Status ReadFoot(Slice *result, char *filename);
-extern Status CheckAndUncompressBlock(Slice *result, Slice *input, uint8_t checksum_type);
-extern Status ReadBlock(Slice *result, char *filename, BlockHandle *handle, uint8_t checksum_type);
+extern Status CheckAndUncompressBlock(Slice *result, Slice *input,
+                                      uint8_t checksum_type);
+extern Status ReadBlock(Slice *result, char *filename, BlockHandle *handle,
+                        uint8_t checksum_type);
 
 /*** data block ***/
 extern Status GetDataBlockRestartOffset(BlockRep *rep);
@@ -126,13 +123,18 @@ extern Status DecodeIndexBlock(BlockRep *rep);
 /** meata block **/
 extern Status DecodePropertyBlock(BlockRep *rep);
 extern Status DecodeMetaIndexBlock(BlockRep *rep);
-extern Status ProcessMetaIndex(char *filename, MetaBlockProperties *props, Foot *foot);
+extern Status ProcessMetaIndex(char *filename, MetaBlockProperties *props,
+                               Foot *foot);
 
-extern Status FindCFHandleIndex(std::vector<ColumnFamilyHandle *> *handles, char *name, int name_len, int *index);
+extern Status FindCFHandleIndex(std::vector<ColumnFamilyHandle *> *handles,
+                                char *name, int name_len, int *index);
 
 extern Status AnalyzeSst(char *filename, int verify, DB *db,
-                std::vector<ColumnFamilyHandle *> *handles);
+                         std::vector<ColumnFamilyHandle *> *handles);
 
-}  // namespace shannon
+extern Status BuildSst(const std::string dbname, Env *env,
+                       const DBOptions options, ColumnFamilyHandle *handle,
+                       Iterator *iter, int number, const char *cfname);
+} // namespace shannon
 
-#endif  // STORAGE_SHANNONDB_INCLUDE_SST_H_
+#endif // STORAGE_SHANNONDB_INCLUDE_SST_H_

@@ -26,7 +26,7 @@ class KVImpl : public DB {
   virtual Status IngestExternFile(char *sst_filename, int verify,
                    std::vector<ColumnFamilyHandle*>* handles) override;
   virtual Status IngestExternFile(char *sst_filename, int verify) override;
-
+  virtual Status BuildTable(char *filename, std::vector<ColumnFamilyHandle*> &handles, std::vector<Iterator*> &iterators);
   virtual const Snapshot* GetSnapshot();
   virtual Status ReleaseSnapshot(const Snapshot* snapshot);
   virtual Iterator* NewIterator(const ReadOptions&);
