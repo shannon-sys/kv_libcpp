@@ -132,9 +132,8 @@ extern Status FindCFHandleIndex(std::vector<ColumnFamilyHandle *> *handles,
 extern Status AnalyzeSst(char *filename, int verify, DB *db,
                          std::vector<ColumnFamilyHandle *> *handles);
 
-extern Status BuildSst(const std::string dbname, Env *env,
-                       const DBOptions options, ColumnFamilyHandle *handle,
-                       Iterator *iter, int number, const char *cfname);
-} // namespace shannon
+extern Status BuildSst(const std::string& dbname, const char *filename, Env *env,
+                   ColumnFamilyHandle *handle, Iterator *iter, uint64_t file_size, bool all_sync);
+}// namespace shannon
 
 #endif // STORAGE_SHANNONDB_INCLUDE_SST_H_

@@ -313,4 +313,5 @@ uint64_t TableBuilder::NumEntries() const { return rep_->num_entries; }
 
 uint64_t TableBuilder::FileSize() const { return rep_->offset; }
 
+uint64_t TableBuilder::CurFileSize() const { return rep_->raw_value_size + rep_->raw_value_size;}
 } // namespace shannon

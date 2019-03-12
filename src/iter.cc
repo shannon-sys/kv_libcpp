@@ -340,7 +340,6 @@ uint64_t KVIter::timestamp() {
 
   memset(&get, 0, sizeof(struct uapi_iter_get_option));
   status_ = Status();
-  saved_key_.clear();
   get.iter.db_index = db_->db_;
   get.iter.timestamp = timestamp_;
   get.iter.iter_index = index_;

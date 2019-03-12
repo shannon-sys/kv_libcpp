@@ -335,29 +335,55 @@ namespace shannon {
     return AnalyzeSst(sst_filename, verify, this, NULL);
   }
 
-  Status KVImpl::BuildTable(char *filename, std::vector<ColumnFamilyHandle*> &handles, std::vector<Iterator*> &iterators)
+  Status KVImpl::BuildTable(const std::string& dirname,
+                          std::vector<ColumnFamilyHandle *> &handles,
+                          std::vector<Iterator *> &iterators)
   {
     Status s;
     if ((handles.size() == 0) || (iterators.size() == 0)) {
-      cerr << "handles  or iterators  size is 0!" <<endl;
+      cerr << "handles  or iterators  size is 0!" << endl;
       return Status::Corruption("handles is NULL!\n");
     }
     if (handles.size() != iterators.size()) {
-      cerr << "handles.size = " << handles.size()<< "iterators size = "<< iterators.size()<< "is err!"<<endl;
+      cerr << "handles.size = " << handles.size()
+		  << "iterators size = " << iterators.size() << "is err!" << endl;
       return Status::Corruption("size is err!\n");
     }
-    if (!env_->FileExists(string(filename))) {
-        s = env_->CreateDir(filename);
+    if (!env_->FileExists(string(dirname))) {
+      s = env_->CreateDir(dirname);
     }
     if (!s.ok()) {
-        return s;
+      return s;
     }
-    for(int i = 0; i <= handles.size() - 1; i++) {
-       s = BuildSst(filename, env_, options_, handles[i], iterators[i], handles[i]->GetID(), handles[i]->GetName().c_str());
+    for (int i = 0; i <= handles.size() - 1; i++) {
+		iterators[i]->SeekToFirst();
+		s = BuildSst(dirname, handles[i]->GetName().data(), env_, handles[i],
+					 iterators[i], options_.target_file_size_base, 1);
     }
     return s;
   }
 
+Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filename,
+                            ColumnFamilyHandle *handle, Iterator *iter, uint64_t file_size)
+  {
+    Status s;
+    if ((handle == NULL) || (iter == NULL)) {
+      cerr << "handles or iter is NULL!" << endl;
+      return Status::Corruption("handles or iter is NULL!\n");
+    }
+    if (!iter->Valid()) {
+      cerr << "iter is not valid!" << endl;
+      return Status::Corruption("iter is not valid!\n");
+    }
+    if (!env_->FileExists(dirname)) {
+      s = env_->CreateDir(dirname);
+    }
+    if (!s.ok()) {
+      return s;
+    }
+    s = BuildSst(dirname, filename.data(), env_, handle, iter, file_size, 0);
+    return s;
+  }
   const Snapshot* KVImpl::GetSnapshot() {
     struct uapi_snapshot snap;
     int ret = 0;

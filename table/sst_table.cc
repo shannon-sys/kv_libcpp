@@ -97,7 +97,7 @@ Status ReadFoot(Slice *result, char *filename) {
     DEBUG("corruption sst file, file len is too small\n");
     return Status::Corruption("sst file is too small");
   }
-  offset = (uint64_t)(file_size)-size;
+  offset = (uint64_t)(file_size) - size;
   read_size = ReadFile(filename, offset, size, result);
   if (read_size != size)
     s = Status::IOError("read sst file foot error");
@@ -994,16 +994,15 @@ out:
   return s;
 }
 
-Status BuildSst(const std::string dbname, Env *env, const DBOptions options,
-                ColumnFamilyHandle *handle, Iterator *iter, int number,
-                const char *cfname) {
+Status BuildSst(const std::string& dbname, const char *filename, Env *env,
+                   ColumnFamilyHandle *handle, Iterator *iter, uint64_t file_size, bool all_sync) {
   Status s;
-  uint64_t file_size = 0;
+  int number = 1;
   uint64_t creation_time = 0;
   uint64_t oldest_key_time = 0;
-  iter->SeekToFirst();
+build_again:
   creation_time = iter->timestamp();
-  std::string fname = TableFileName(dbname, number, cfname);
+  std::string fname = TableFileName(dbname, number, filename);
   if (iter->Valid()) {
     WritableFile *file;
     s = env->NewWritableFile(fname, &file);
@@ -1020,6 +1019,25 @@ Status BuildSst(const std::string dbname, Env *env, const DBOptions options,
                         ParsedInternalKey(key, iter->timestamp(), kTypeValue));
       const Slice add_key(result);
       builder->Add(add_key, value);
+      if (builder->CurFileSize() > file_size * number) {
+        if (all_sync) {
+          number++;
+          oldest_key_time = iter->timestamp();
+          s = builder->Finish(creation_time, oldest_key_time);
+          if (s.ok()) {
+            s = file->Sync();
+          }
+          if (s.ok()) {
+            s = file->Close();
+          }
+          delete builder;
+          file = NULL;
+          goto build_again;
+        } else {
+          iter->Next();
+          break;
+        }
+      }
     }
     oldest_key_time = iter->timestamp();
     s = builder->Finish(creation_time, oldest_key_time);
@@ -1036,11 +1054,10 @@ Status BuildSst(const std::string dbname, Env *env, const DBOptions options,
     delete file;
     file = NULL;
   }
-
   if (s.ok() && file_size > 0) {
     // keep it
   } else {
-    env->DeleteFile(fname);
+    env->DeleteFile(filename);
   }
   return s;
 }

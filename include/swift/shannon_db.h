@@ -90,7 +90,8 @@ class DB {
   // kvs will be writen to the column family name of "default".
   virtual Status IngestExternFile(char *sst_filename, int verify) = 0;
 
-  virtual Status BuildTable(char *filename, std::vector<ColumnFamilyHandle*> &handles, std::vector<Iterator*> &iterators) = 0;
+  virtual Status BuildTable(const std::string& dirname, std::vector<ColumnFamilyHandle*> &handles, std::vector<Iterator*> &iterators) = 0;
+  virtual Status BuildSstFile(const std::string& dirname, const std::string& filename, ColumnFamilyHandle *handle, Iterator *iter, uint64_t file_size) = 0;
   // Return a heap-allocated iterator over the contents of the database.
   // The result of NewIterator() is initially invalid (caller must
   // call one of the Seek methods on the iterator before using it).
