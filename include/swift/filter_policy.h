@@ -20,7 +20,8 @@ public:
   virtual bool KeyMayMatch(const Slice &key, const Slice &filter) const = 0;
 };
 
-const FilterPolicy *NewBloomFilterPolicy(int bits_per_key);
+const FilterPolicy *NewBloomFilterPolicy(int bits_per_key,
+                                        bool use_block_based_builder = true);
 }
 
 #endif // STORAGE_SHANNON_INCLUDE_FILTER_POLICY_H_

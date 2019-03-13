@@ -84,7 +84,8 @@ public:
 };
 }
 
-const FilterPolicy *NewBloomFilterPolicy(int bits_per_key) {
+const FilterPolicy *NewBloomFilterPolicy(int bits_per_key,
+                                        bool use_block_based_builder) {
   return new BloomFilterPolicy(bits_per_key);
 }
 
