@@ -994,8 +994,9 @@ out:
   return s;
 }
 
-Status BuildSst(const std::string& dbname, const char *filename, Env *env,
-                   ColumnFamilyHandle *handle, Iterator *iter, uint64_t file_size, bool all_sync) {
+Status BuildSst(const std::string &dbname, const char *filename, Env *env,
+                ColumnFamilyHandle *handle, Iterator *iter, uint64_t file_size,
+                bool all_sync) {
   Status s;
   int number = 1;
   uint64_t creation_time = 0;
@@ -1012,8 +1013,8 @@ build_again:
     TableBuilder *builder =
         new TableBuilder(Options(), file, handle->GetName(), handle->GetID());
     for (; iter->Valid(); iter->Next()) {
-      const Slice key(iter->key().data());
-      const Slice value(iter->value().data());
+      const Slice key = iter->key();
+      const Slice value = iter->value();
       string result;
       AppendInternalKey(&result,
                         ParsedInternalKey(key, iter->timestamp(), kTypeValue));

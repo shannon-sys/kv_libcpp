@@ -19,6 +19,7 @@ class KVIter: public Iterator {
         index_(iter_index),
         cf_index_(cf_index),
         timestamp_(timestamp),
+        has_timestamp(false),
         valid_(false),
         prefix_length_(0) {
   }
@@ -50,6 +51,7 @@ class KVIter: public Iterator {
   std::string saved_key_;
   std::string saved_value_;
   uint64_t cur_timestamp_;
+  bool has_timestamp;
   int direction_;
   bool valid_;
   char prefix_[256];
@@ -80,6 +82,7 @@ KVIter::~KVIter() {
 void KVIter::Next() {
   struct uapi_iter_move_option move;
   int ret;
+  has_timestamp = false;
 
   move.iter.db_index = db_->db_;
   move.iter.timestamp = timestamp_;
@@ -107,6 +110,7 @@ void KVIter::Next() {
 void KVIter::Prev() {
   struct uapi_iter_move_option move;
   int ret;
+  has_timestamp = false;
 
   status_ = Status();
   move.iter.db_index = db_->db_;
@@ -135,6 +139,7 @@ void KVIter::Prev() {
 void KVIter::Seek(const Slice& target) {
   struct uapi_iter_seek_option seek;
   int ret;
+  has_timestamp = false;
 
   status_ = Status();
   seek.iter.db_index = db_->db_;
@@ -156,6 +161,7 @@ void KVIter::Seek(const Slice& target) {
 void KVIter::SeekToFirst() {
   struct uapi_iter_seek_option seek;
   int ret;
+  has_timestamp = false;
 
   /* use prefix */
   if (this->prefix_length_ > 0) {
@@ -214,6 +220,7 @@ void KVIter::SeekToLast() {
   int ret;
   bool is_overflow;
   char prefix[256];
+  has_timestamp = false;
 
   /* use prefix */
   if (this->prefix_length_ > 0) {
@@ -257,6 +264,7 @@ void KVIter::SeekToLast() {
 void KVIter::SeekForPrev(const Slice& target) {
     struct uapi_iter_seek_option seek;
     int ret;
+    has_timestamp = false;
 
     status_ = Status();
     seek.iter.db_index = db_->db_;
@@ -288,6 +296,7 @@ void KVIter::SetPrefix(const Slice& prefix) {
 Slice KVIter::key() {
   struct uapi_iter_get_option get;
   int ret;
+  has_timestamp = false;
 
   memset(&get, 0, sizeof(struct uapi_iter_get_option));
   status_ = Status();
@@ -305,6 +314,8 @@ Slice KVIter::key() {
   }
   else {
     saved_key_.assign(get.key, get.key_len);
+    cur_timestamp_ = get.timestamp;
+    has_timestamp = true;
   }
   free(get.key);
   return saved_key_;
@@ -313,6 +324,7 @@ Slice KVIter::key() {
 Slice KVIter::value() {
   struct uapi_iter_get_option get;
   int ret;
+  has_timestamp = false;
 
   status_ = Status();
   saved_value_.clear();
@@ -329,12 +341,16 @@ Slice KVIter::value() {
   }
   else {
     saved_value_.assign(get.value, get.value_len);
+    cur_timestamp_ = get.timestamp;
+    has_timestamp = true;
   }
   free(get.value);
   return saved_value_;
 }
 
 uint64_t KVIter::timestamp() {
+  if (has_timestamp)
+    return cur_timestamp_;
   struct uapi_iter_get_option get;
   int ret;
 
@@ -353,6 +369,7 @@ uint64_t KVIter::timestamp() {
   }
   else {
     cur_timestamp_ = get.timestamp;
+    has_timestamp = true;
   }
   free(get.key);
   return cur_timestamp_;
