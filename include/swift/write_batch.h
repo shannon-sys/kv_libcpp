@@ -46,7 +46,7 @@ class WriteBatch {
   friend class WriteBatchInternal;
 
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
-  std::list<std::string> value_;
+  std::string value_;
 
 };
 
@@ -86,7 +86,7 @@ class WriteBatchNonatomic {
   friend class WriteBatchInternalNonatomic;
 
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
-  std::list<std::string> value_;
+  std::string value_;
 
 };
 
