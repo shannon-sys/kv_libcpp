@@ -135,7 +135,7 @@ Status WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
               (reinterpret_cast<const ColumnFamilyHandle *>(column_family))->GetID()));
     PutFixed32(&rep_, key.size());
     PutFixed32(&rep_, value.size());
-    value_.append(value.ToString());
+    value_.append(value.data(), value.size());
     PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
     PutSliceData(&rep_, key);
     WriteBatchInternal::SetSize(this, WriteBatchInternal::ByteSize(this));
@@ -160,7 +160,7 @@ Status WriteBatch::Put(const Slice& key, const Slice& value) {
   PutFixed32(&rep_, static_cast<int>(0));
   PutFixed32(&rep_, key.size());
   PutFixed32(&rep_, value.size());
-  value_.append(value.ToString());
+  value_.append(value.data(), value.size());
   PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
   PutSliceData(&rep_, key);
   WriteBatchInternal::SetSize(this, WriteBatchInternal::ByteSize(this));
@@ -333,7 +333,7 @@ Status WriteBatchNonatomic::Put(ColumnFamilyHandle* column_family, const Slice& 
               (reinterpret_cast<const ColumnFamilyHandle *>(column_family))->GetID()));
     PutFixed32(&rep_, key.size());
     PutFixed32(&rep_, value.size());
-    value_.append(value.ToString());
+    value_.append(value.data(), value.size());
     PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
     PutSliceData(&rep_, key);
     WriteBatchInternalNonatomic::SetSize(this, WriteBatchInternalNonatomic::ByteSize(this));
@@ -362,7 +362,7 @@ Status WriteBatchNonatomic::Put(const Slice& key, const Slice& value, __u64 time
   PutFixed32(&rep_, static_cast<int>(0));
   PutFixed32(&rep_, key.size());
   PutFixed32(&rep_, value.size());
-  value_.append(value.ToString());
+  value_.append(value.data(), value.size());
   PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
   PutSliceData(&rep_, key);
   WriteBatchInternalNonatomic::SetSize(this, WriteBatchInternalNonatomic::ByteSize(this));
