@@ -366,6 +366,25 @@ bool GetVarint64(Slice* input, uint64_t* value) {
   }
 }
 
+bool GetFixed64(Slice* input, uint64_t* value) {
+    if (input->size() < sizeof(uint64_t)) {
+      return false;
+    }
+    *value = DecodeFixed64(input->data());
+    input->remove_prefix(sizeof(uint64_t));
+    return true;
+}
+
+bool GetFixed32(Slice* input, uint32_t* value) {
+    if (input->size() < sizeof(uint32_t)) {
+      return false;
+    }
+    *value = DecodeFixed32(input->data());
+    input->remove_prefix(sizeof(uint32_t));
+    return true;
+}
+
+
 const char* GetLengthPrefixedSlice(const char* p, const char* limit,
                                    Slice* result) {
   uint32_t len;

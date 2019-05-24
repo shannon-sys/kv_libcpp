@@ -6,27 +6,23 @@
 #include "swift/write_batch.h"
 #include "write_batch_internal.h"
 #include "util/coding.h"
+#include "util/util.h"
 #include "src/venice_kv.h"
-
-#define OFFSET(Type, member) (size_t)&( ((Type*)0)->member)
-#define PutFixedAlign(des, src)               \
-          if (sizeof(size_t) == 4)            \
-            PutFixed32(des, (size_t) (src));  \
-          else if (sizeof(size_t) == 8)       \
-            PutFixed64(des, (size_t) (src));
 
 namespace shannon {
 
-static const size_t kHeader = sizeof(struct write_batch_header);
-
-enum ValueType {
-  kTypeDeletion = 2,
-  kTypeValue = 3
-};
+extern const size_t kHeader = sizeof(struct write_batch_header);
 
 WriteBatch::WriteBatch() {
   value_.reserve(MAX_BATCH_SIZE);
   Clear();
+}
+//write_batch_with_index
+WriteBatch::WriteBatch(size_t reserved_bytes, size_t max_bytes) {
+  value_.reserve(MAX_BATCH_SIZE);
+  rep_.reserve((reserved_bytes > kHeader) ?
+    reserved_bytes :kHeader);
+  rep_.resize(kHeader);
 }
 
 WriteBatch::~WriteBatch() { }
@@ -74,7 +70,9 @@ Status WriteBatch::Iterate(Handler* handler) const {
     return Status::OK();
   }
 }
-
+int WriteBatch::Count() const {
+  return DecodeFixed32(rep_.data() + OFFSET(write_batch_header, count));
+}
 int WriteBatchInternal::Count(const WriteBatch* b) {
   return DecodeFixed32(b->rep_.data() + OFFSET(write_batch_header, count));
 }
@@ -141,6 +139,10 @@ Status WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
     WriteBatchInternal::SetSize(this, WriteBatchInternal::ByteSize(this));
     WriteBatchInternal::SetValueSize(this, value.size());
     return Status::OK();
+}
+
+size_t WriteBatch::GetDataSize() const {
+	return WriteBatchInternal::ByteSize(this);
 }
 
 Status WriteBatch::Put(const Slice& key, const Slice& value) {

@@ -25,8 +25,6 @@ static const int kReadBytesPeriod = 1048576;
 
 class InternalKey;
 
-enum ValueType { kTypeDeletion = 0x0, kTypeValue = 0x1 };
-
 static const ValueType kValueTypeForSeek = kTypeValue;
 
 typedef uint64_t SequenceNumber;

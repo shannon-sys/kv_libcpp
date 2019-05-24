@@ -15,6 +15,10 @@
 
 namespace shannon {
 
+enum ValueType {
+  kTypeDeletion = 2,
+  kTypeValue = 3
+};
 static const bool kLittleEndian = PLATFORM_IS_LITTLE_ENDIAN;
 
 extern void EncodeFloat32Sort(char *buf, float f);
@@ -34,6 +38,8 @@ extern void PutSliceData(std::string* dst, const Slice& value);
 // and advance the slice past the parsed value.
 extern bool GetVarint32(Slice* input, uint32_t* value);
 extern bool GetVarint64(Slice* input, uint64_t* value);
+extern bool GetFixed32(Slice* input, uint32_t* value);
+extern bool GetFixed64(Slice* input, uint64_t* value);
 extern bool GetLengthPrefixedSlice(Slice* input, Slice* result);
 
 // Pointer-based variants of GetVarint...  These either store a value

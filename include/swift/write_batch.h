@@ -12,13 +12,12 @@
 #include "status.h"
 
 namespace shannon {
-
 class Slice;
 class ColumnFamilyHandle;
-
 class WriteBatch {
  public:
   WriteBatch();
+  WriteBatch(size_t reserved_bytes, size_t max_bytes);
   ~WriteBatch();
 
   Status Put(ColumnFamilyHandle* column_family, const Slice& key,
@@ -29,7 +28,10 @@ class WriteBatch {
   Status Delete(ColumnFamilyHandle* column_family, const Slice& key);
   // If the database contains a mapping for "key", erase it.  Else do nothing.
   Status Delete(const Slice& key);
-
+  size_t GetDataSize() const;
+  int Count() const;
+  WriteBatch* GetWriteBatch(){ return this; }
+  const std::string& Data() const { return rep_; }
   // Clear all updates buffered in this batch.
   void Clear();
 
@@ -89,7 +91,5 @@ class WriteBatchNonatomic {
   std::string value_;
 
 };
-
-}  // namespace shannon
-
+}
 #endif  // SHANNON_DB_INCLUDE_WRITE_BATCH_H_
