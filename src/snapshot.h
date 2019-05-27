@@ -17,6 +17,10 @@ class SnapshotImpl : public Snapshot {
     delete s;
   }
 
+  virtual SequenceNumber GetSequenceNumber() const {
+    return timestamp_;
+  }
+
 };
 
 }  // namespace shannon

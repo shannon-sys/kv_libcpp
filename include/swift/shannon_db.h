@@ -16,10 +16,15 @@
 #include "swift/comparator.h"
 #include "swift/types.h"
 #include "swift/transaction_log.h"
+#include "swift/write_batch_with_index.h"
 
 namespace shannon {
 
-class Snapshot {};
+class Snapshot {
+public:
+  virtual SequenceNumber GetSequenceNumber() const = 0;
+};
+
 struct Options;
 struct DBOptions;
 

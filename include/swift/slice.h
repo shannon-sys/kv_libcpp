@@ -53,8 +53,30 @@ class Slice {
     size_ -= n;
   }
 
+  // Intentionally copyable
+  char toHex(unsigned char v) const {
+    if (v <= 9) {
+      return '0' + v;
+    }
+    return 'A' + v - 10;
+  }
+
   // Return a string that contains the copy of the referenced data.
-  std::string ToString() const { return std::string(data_, size_); }
+  std::string ToString(bool hex=false) const {
+    std::string result;  // RVO/NRVO/move
+    if (hex) {
+      result.reserve(2 * size_);
+      for (size_t i = 0; i < size_; ++i) {
+        unsigned char c = data_[i];
+        result.push_back(toHex(c >> 4));
+        result.push_back(toHex(c & 0xf));
+      }
+      return result;
+    } else {
+      result.assign(data_, size_);
+      return result;
+    }
+  }
 
   // Three-way comparison.  Returns value:
   //   <  0 iff "*this" <  "b",
