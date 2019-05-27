@@ -33,7 +33,7 @@ install:
 	install -p -D -m 0664 include/swift/* /usr/include/swift/
 	ldconfig
 %.o:%.cc
-	g++ $(CXXFLAGS) -g -fPIC -I${HEAD} -I. -c $^ -o $@
+	g++ $(CXXFLAGS) -g -fPIC -O2 -I${HEAD} -I. -c $^ -o $@
 
 clean:
 	rm -rf *.o *.so *.a *_test src/*.o util/*.o table/*.o env/*.o cache/*.o
