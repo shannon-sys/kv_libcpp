@@ -102,7 +102,7 @@ Status TableBuilder::ChangeOptions(const Options &options) {
   // Note: if more fields are added to Options, update
   // this function to catch changes that should not be allowed to
   // change in the middle of building a Table.
-  if (options.comparator != rep_->options.comparator) {
+  if (options.inner_comparator != rep_->options.inner_comparator) {
     return Status::InvalidArgument("changing comparator while building table");
   }
 
@@ -120,12 +120,12 @@ void TableBuilder::Add(const Slice &key, const Slice &value) {
   if (!ok())
     return;
   if (r->num_entries > 0) {
-    assert(r->options.comparator->Compare(key, Slice(r->last_key)) > 0);
+    assert(r->options.inner_comparator->Compare(key, Slice(r->last_key)) > 0);
   }
 
   if (r->pending_index_entry) {
     assert(r->data_block.empty());
-    r->options.comparator->FindShortestSeparator(&r->last_key, key);
+    r->options.inner_comparator->FindShortestSeparator(&r->last_key, key);
     std::string handle_encoding;
     r->pending_handle.EncodeTo(&handle_encoding);
     r->index_block.Add(r->last_key, Slice(handle_encoding));
@@ -279,7 +279,7 @@ Status TableBuilder::Finish(uint64_t creation_time, uint64_t oldest_key_time) {
   // Write index block
   if (ok()) {
     if (r->pending_index_entry) {
-      r->options.comparator->FindShortSuccessor(&r->last_key);
+      r->options.inner_comparator->FindShortSuccessor(&r->last_key);
       std::string handle_encoding;
       r->pending_handle.EncodeTo(&handle_encoding);
       r->index_block.Add(r->last_key, Slice(handle_encoding));

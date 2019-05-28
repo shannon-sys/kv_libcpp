@@ -61,7 +61,7 @@ struct AdvancedColumnFamilyOptions {
 };
 
 struct ColumnFamilyOptions : public AdvancedColumnFamilyOptions {
-  const Comparator* comparator = BytewiseComparator();
+  const Comparator* inner_comparator = BytewiseComparator();
   std::shared_ptr<CompactionFilterFactory> compaction_filter_factory = nullptr;
   std::shared_ptr<TableFactory> table_factory;
   ColumnFamilyOptions() { }
