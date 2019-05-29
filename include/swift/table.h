@@ -41,19 +41,6 @@ enum IndexType : char {
   kTwoLevelIndexSearch,
 };
 
-struct TableFactory {
-};
-
-struct BlockBasedTableOptions {
-  std::shared_ptr<Cache> block_cache = nullptr;
-  std::shared_ptr<const FilterPolicy> filter_policy = nullptr;
-  bool no_block_cache = false;
-  size_t block_size = 4 * 1024;
-  bool cache_index_and_filter_blocks = false;
-};
-
-extern TableFactory* NewBlockBasedTableFactory(const BlockBasedTableOptions &
-        table_options = BlockBasedTableOptions());
 }  // namespace shannon
 
 #endif  // TABLE_H_
