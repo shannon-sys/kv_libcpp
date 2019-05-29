@@ -12,7 +12,7 @@ namespace shannon {
 
 bool ReadKeyFromWriteBatchEntry(Slice *input, Slice *key, bool cf_record) {
   assert(input != nullptr && key != nullptr);
-  struct batch_cmd *cmd = (struct batch_cmd *)input->data();
+  struct writebatch_cmd *cmd = (struct writebatch_cmd *)input->data();
   if (cmd->watermark != CMD_START_MARK)
     return false;
   switch (cmd->cmd_type) {
@@ -31,7 +31,7 @@ bool ReadKeyFromWriteBatchEntry(Slice *input, Slice *key, bool cf_record) {
 Status ReadRecordFromWriteBatch(Slice *input, WriteType *tag, Slice *key,
                                 Slice *value, Slice *blob, Slice *xid) {
   assert(key != nullptr && value != nullptr);
-  struct batch_cmd *cmd = (struct batch_cmd *)input->data();
+  struct writebatch_cmd *cmd = (struct writebatch_cmd *)input->data();
   if (cmd->watermark != CMD_START_MARK)
     return Status::Corruption("unknown WriteBatch watermark ");
   switch (cmd->cmd_type) {

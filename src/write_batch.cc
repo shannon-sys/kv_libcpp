@@ -46,7 +46,7 @@ Status WriteBatch::Iterate(Handler* handler) const {
   int found = 0;
   while (!input.empty()) {
     found++;
-    struct batch_cmd *cmd = (struct batch_cmd *)input.data();
+    struct writebatch_cmd *cmd = (struct writebatch_cmd *)input.data();
     if (cmd->watermark != CMD_START_MARK)
       return Status::Corruption("bad cmd start mark");
     switch (cmd->cmd_type) {
@@ -121,7 +121,7 @@ Status WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
     int count = WriteBatchInternal::Count(this);
     if (column_family == NULL || key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
         return Status::Corruption("format error: key , value or column family.");
-    if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
+    if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
         (count >= MAX_BATCH_COUNT)) {
         return Status::BatchFull();
     }
@@ -151,7 +151,7 @@ Status WriteBatch::Put(const Slice& key, const Slice& value) {
   int count = WriteBatchInternal::Count(this);
   if (key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
     return Status::Corruption("format error: key , value or column family.");
-  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
+  if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
       (count >= MAX_BATCH_COUNT)) {
     return Status::BatchFull();
   }
@@ -176,7 +176,7 @@ Status WriteBatch::Delete(ColumnFamilyHandle* column_family, const Slice& key) {
   int count = WriteBatchInternal::Count(this);
   if (column_family == NULL || key.data() == NULL || key.size() <= 0)
     return Status::Corruption("format error: key or column family.");
-  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() > MAX_BATCH_SIZE) ||
+  if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() > MAX_BATCH_SIZE) ||
       (count >= MAX_BATCH_COUNT)) {
     return Status::BatchFull();
   }
@@ -200,7 +200,7 @@ Status WriteBatch::Delete(const Slice& key) {
   int count = WriteBatchInternal::Count(this);
   if (key.data() == NULL || key.size() <= 0)
     return Status::Corruption("format error: key or column family.");
-  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() > MAX_BATCH_SIZE) ||
+  if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() > MAX_BATCH_SIZE) ||
       (count >= MAX_BATCH_COUNT)) {
     return Status::BatchFull();
   }
@@ -244,7 +244,7 @@ Status WriteBatchNonatomic::Iterate(Handler* handler) const {
   int found = 0;
   while (!input.empty()) {
     found++;
-    struct batch_cmd *cmd = (struct batch_cmd *)input.data();
+    struct writebatch_cmd *cmd = (struct writebatch_cmd *)input.data();
     if (cmd->watermark != CMD_START_MARK)
       return Status::Corruption("bad cmd start mark");
     switch (cmd->cmd_type) {
@@ -323,7 +323,7 @@ Status WriteBatchNonatomic::Put(ColumnFamilyHandle* column_family, const Slice& 
     int count = WriteBatchInternalNonatomic::Count(this);
     if (column_family == NULL || key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
         return Status::Corruption("format error: key , value or column family.");
-    if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() + value.size() > MAX_BATCH_NONATOMIC_SIZE) ||
+    if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_NONATOMIC_SIZE) ||
         (count >= MAX_BATCH_NONATOMIC_COUNT)) {
         return Status::BatchFull();
     }
@@ -353,7 +353,7 @@ Status WriteBatchNonatomic::Put(const Slice& key, const Slice& value, __u64 time
   int count = WriteBatchInternalNonatomic::Count(this);
   if (key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
     return Status::Corruption("format error: key , value or column family.");
-  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() + value.size() > MAX_BATCH_NONATOMIC_SIZE) ||
+  if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_NONATOMIC_SIZE) ||
       (count >= MAX_BATCH_NONATOMIC_COUNT)) {
     return Status::BatchFull();
   }
@@ -382,7 +382,7 @@ Status WriteBatchNonatomic::Delete(ColumnFamilyHandle* column_family, const Slic
   int count = WriteBatchInternalNonatomic::Count(this);
   if (column_family == NULL || key.data() == NULL || key.size() <= 0)
     return Status::Corruption("format error: key or column family.");
-  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() > MAX_BATCH_NONATOMIC_SIZE) ||
+  if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() > MAX_BATCH_NONATOMIC_SIZE) ||
       (count >= MAX_BATCH_NONATOMIC_COUNT)) {
     return Status::BatchFull();
   }
@@ -410,7 +410,7 @@ Status WriteBatchNonatomic::Delete(const Slice& key, __u64 timestamp) {
   int count = WriteBatchInternalNonatomic::Count(this);
   if (key.data() == NULL || key.size() <= 0)
     return Status::Corruption("format error: key or column family.");
-  if ((byte_size + value_size + sizeof(struct batch_cmd) + key.size() > MAX_BATCH_NONATOMIC_SIZE) ||
+  if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() > MAX_BATCH_NONATOMIC_SIZE) ||
       (count >= MAX_BATCH_NONATOMIC_COUNT)) {
     return Status::BatchFull();
   }

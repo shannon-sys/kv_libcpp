@@ -2,7 +2,7 @@
 #define __VENICE_KV__
 
 #include <linux/types.h>
-#include "src/venice_macro.h"
+#include "venice_macro.h"
 
 struct uapi_snapshot {
 	int db;
@@ -17,7 +17,7 @@ struct uapi_checkpoint {
 };
 
 #define CMD_START_MARK	0x1234567890abcdef
-struct batch_cmd {
+struct writebatch_cmd {
 	__u64 watermark;
 	__u64 timestamp;
 #define DELETE_TYPE      2
@@ -36,10 +36,15 @@ struct readbatch_cmd {
 	int cmd_type;
 	int cf_index;
 	int value_buf_size;
-	char *key;
 	int key_len;
 	char *value;
-	int value_len;
+	unsigned int *value_len_addr;
+#define READBATCH_SUCCESS      0
+#define READBATCH_NO_KEY       1
+#define READBATCH_DATA_ERR     2
+#define READBATCH_VAL_BUF_ERR  3
+	unsigned int *return_status;
+	char key[0];
 };
 
 struct write_batch_header {
@@ -56,12 +61,12 @@ struct write_batch_header {
 
 struct read_batch_header {
 	unsigned long size;
-	unsigned long value_size;
 #define MAX_READBATCH_COUNT		20000
 	int count;
 	int db_index;
 	int fill_cache;
-	int reserved;
+	unsigned int *failed_cmd_count;
+	__u64 snapshot;
 	char data[0];
 };
 
@@ -116,6 +121,7 @@ struct uapi_db_status {
 	int reserved;
 	unsigned long total_kv_count;
 	unsigned long total_disk_usage;
+	unsigned long est_total_disk_usage;
 	unsigned long total_cache_size;
 	unsigned long use_cache_size;
 };
@@ -127,6 +133,7 @@ struct uapi_cf_status {
 	int reserved;
 	unsigned long total_kv_count;
 	unsigned long total_disk_usage;
+	unsigned long est_total_disk_usage;
 	unsigned long use_cache_size;
 	unsigned long total_cache_size;
 };
@@ -170,6 +177,7 @@ struct uapi_dev_status {
 	__u64 capacity;
 	__u64 physical_capacity;
 	__u64 disk_usage;
+	__u64 est_disk_usage;
 
 };
 
