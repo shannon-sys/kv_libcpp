@@ -51,27 +51,41 @@ cd /usr/include; ls | grep snappy
 (1) **安装方法**：
 
 ```
-yum install snappy
-git clone https://github.com/goole/snappy.git
-cd snappy; cp snappy-c.h /usr/include
-cd /usr/lib64; ln -s libsnappy.so.1.1.4 libsnappy.so
+sudo yum install snappy snappy-devel
 
 ```
 > 说明：如果安装失败，可以尝试更新源，比如使用ali源。
-> 安装后，需要下载源码添加头文件；需再创建一个软链接。
+> 默认安装的版本为1.1.4。
 
 (2) **安装效果举例**：
 ```
-cd /usr/lib64; ls -alh | grep snappy
+cd /usr/lib64 && ls -alh | grep snappy
 显示信息：
    libsnappy.so -> libsnappy.so.1.1.4
    libsnappy.so.1 -> libsnappy.so.1.1.4
    libsnappy.so.1.1.4
-cd /usr/include; ls | grep snappy
+cd /usr/include && ls | grep snappy
+显示信息：
    snappy-c.h
 ```
 
-> 说明：安装目录可能存在差异，根据实际路径建立软链接。
+(3) **源码安装方法（可选）**
+
+比如源码安装1.1.7版本（需要CMake 3.1以上）：
+
+git clone https://github.com/google/snappy.git
+cd snappy
+git checkout 1.1.7
+
+默认编译生成的是静态库。若要生成动态链接库，需要修改文件CMakeLists.txt，
+找到 add_library(snappy "") 这一行，改为 add_library(snappy SHARED "")
+
+mkdir build && cd build
+cmake ../ && make
+sudo make install
+
+对应的库将安装到目录 /usr/local/lib64/ 下面。应用程序使用时需要将该目录加入链接路径。
+对应的头文件在目录 /usr/local/include/ 下面。
 
 ### 2.2 安装说明
 
