@@ -5,7 +5,7 @@ HEAD=./include
 CXXFLAGS = -std=c++11
 .PHONY:clean test ${LibName} install uninstall
 
-${LibName}:src/kv_db.o src/kv_impl.o src/status.o src/write_batch.o src/iter.o \
+${LibName}:src/kv_db.o src/kv_impl.o src/status.o src/write_batch.o src/iter.o src/log_iter.o \
 	src/column_family.o util/coding.o util/comparator.o util/bloom.o util/hash.o util/bloom.o util/filter_policy.o \
 	util/crc32c.o util/xxhash.o util/fileoperate.o util/filename.o table/dbformat.o table/filter_block.o src/write_batch_with_index.o \
 	cache/lru_cache.o cache/sharded_cache.o table/block_builder.o env/env.o table/format.o table/meta_block.o \
