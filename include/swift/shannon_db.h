@@ -23,6 +23,7 @@ namespace shannon {
 class Snapshot {
 public:
   virtual SequenceNumber GetSequenceNumber() const = 0;
+  virtual ~Snapshot() { }
 };
 
 struct Options;
