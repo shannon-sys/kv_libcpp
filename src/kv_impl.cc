@@ -26,7 +26,9 @@ using namespace std;
 namespace shannon {
   const std::string kDefaultColumnFamilyName("default");
   KVImpl::~KVImpl() {
-    close(fd_);
+    if (fd_) close(fd_);
+    if (env_) delete env_;
+    if (default_cf_handle_) delete default_cf_handle_;
   }
   KVImpl::KVImpl(const DBOptions& options, const std::string& dbname, const std::string& device)
       :env_(options.env),
