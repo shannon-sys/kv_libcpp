@@ -214,12 +214,16 @@ struct uapi_cf_iterator {
 	unsigned int cf_index;
 	int iter_index;
 	int valid_key;
+	int only_read_key;
+	int reserved;
 };
 
 struct uapi_db_iterator {
 	__u64 timestamp;
 	unsigned int db_index;
 	unsigned int count;
+	int only_read_key;
+	int reserved;
 	struct uapi_cf_iterator iters[0];
 };
 

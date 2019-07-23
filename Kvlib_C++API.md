@@ -214,6 +214,10 @@ struct ReadOptions {
   //这个数据是应该储存在缓存中
   //默认是true
 
+  bool only_read_key;
+  //创建iterator时，如果只获取key，设置该参数可提高性能。
+  //默认是false
+
   const Snapshot* snapshot;
   // 如果snapshot不为空，则根据snapshot查询数据（谁创建由谁删除，否则会占用大量资源）
   //如果snapshot为空，则创建当前时刻的临时snapshot查询数据，snapshot的时刻为当前时刻
@@ -222,6 +226,7 @@ struct ReadOptions {
   ReadOptions()
       : verify_checksums(false),
         fill_cache(true),
+        only_read_key(false),
         snapshot(NULL) {
   }
   //用这个接口获取一个默认的snapshot

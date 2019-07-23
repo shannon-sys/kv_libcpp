@@ -85,6 +85,11 @@ struct ReadOptions {
   // Default: true
   bool fill_cache;
 
+  // Should read value from KV-SSD for this iteration?
+  // Callers may wish to set this field to true if do not read value.
+  // Default: flase
+  bool only_read_key;
+
   // If "snapshot" is non-NULL, read as of the supplied snapshot
   // (which must belong to the DB that is being read and which must
   // not have been released).  If "snapshot" is NULL, use an impliicit
@@ -95,6 +100,7 @@ struct ReadOptions {
   ReadOptions()
       : verify_checksums(false),
         fill_cache(true),
+        only_read_key(false),
         snapshot(NULL) {
   }
 };

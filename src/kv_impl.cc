@@ -436,9 +436,11 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     iter->db_index = this->db_;
     iter->timestamp = options.snapshot != NULL
         ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0;
+    iter->only_read_key = options.only_read_key ? 1 : 0;
     iter->iters[0].cf_index = column_family->GetID();
     iter->iters[0].db_index = this->db_;
     iter->iters[0].timestamp = iter->timestamp;
+    iter->iters[0].only_read_key = iter->only_read_key;
     iter->count = 1;
     ret = ioctl(fd_, IOCTL_CREATE_ITERATOR, iter);
     if (ret < 0) {
@@ -473,11 +475,13 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
         ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0;
     iter->db_index = (unsigned int)this->db_;
     iter->count = column_families.size();
+    iter->only_read_key = options.only_read_key ? 1 : 0;
     for (int i = 0; i < column_families.size(); i ++) {
         iter->iters[i].timestamp = iter->timestamp;
         iter->iters[i].db_index = (unsigned int)this->db_;
         iter->iters[i].cf_index = (reinterpret_cast<ColumnFamilyHandleImpl* >
                 (column_families[i]))->GetID();
+        iter->iters[i].only_read_key = iter->only_read_key;
     }
     ret = ioctl(fd_, IOCTL_CREATE_ITERATOR, iter);
     /* create iterator failed! */
