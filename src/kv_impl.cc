@@ -26,15 +26,13 @@ using namespace std;
 namespace shannon {
   const std::string kDefaultColumnFamilyName("default");
   KVImpl::~KVImpl() {
-    if (fd_) close(fd_);
-    if (env_) delete env_;
-    if (default_cf_handle_) delete default_cf_handle_;
   }
   KVImpl::KVImpl(const DBOptions& options, const std::string& dbname, const std::string& device)
       :env_(options.env),
        options_(options),
        dbname_(dbname),
        device_(device) {
+       default_cf_handle_ = NULL;
     }
 
   Status KVImpl::Open() {
@@ -46,7 +44,6 @@ namespace shannon {
     s = this->Open(options_, column_family_descriptors, &column_family_handles);
     if (s.ok()) {
         default_cf_handle_ = dynamic_cast<ColumnFamilyHandleImpl* >(column_family_handles[0]);
-        handles_.push_back(default_cf_handle_);
     }
     return s;
   }
@@ -142,9 +139,6 @@ namespace shannon {
             }
         }
     }
-    /* set default handle */
-    if (handles->size() > 0)
-        default_cf_handle_ = dynamic_cast<ColumnFamilyHandleImpl* >((*handles)[0]);
     for (int i = 0; i < (*handles).size(); ++i) {
         (*handles)[i]->SetDescriptor(column_families[i]);
     }
@@ -153,7 +147,12 @@ namespace shannon {
 
   void KVImpl::Close() {
     if (fd_) {
-        close(fd_);
+      close(fd_);
+      fd_ = 0;
+    }
+    if (default_cf_handle_){
+      delete default_cf_handle_;
+      default_cf_handle_ = NULL;
     }
   }
 
