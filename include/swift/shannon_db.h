@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include "swift/options.h"
 #include "swift/write_batch.h"
+#include "swift/read_batch.h"
 #include "swift/status.h"
 #include "swift/iterator.h"
 #include "swift/env.h"
@@ -66,6 +67,10 @@ class DB {
   // Returns OK on success, non-OK on failure.
   // Note: consider setting options.sync = true.
   virtual Status Write(const WriteOptions& options, WriteBatch* updates) = 0;
+
+  //
+  virtual Status Read(const ReadOptions& options, ReadBatch* batch,
+		  std::vector<std::string> *values) = 0;
   virtual Status WriteNonatomic(const WriteOptions& options,
                                 WriteBatchNonatomic* updates) = 0;
 

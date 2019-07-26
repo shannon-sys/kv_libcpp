@@ -18,6 +18,7 @@
 #include "src/venice_kv.h"
 #include "src/venice_ioctl.h"
 #include "src/write_batch_internal.h"
+#include "src/read_batch_internal.h"
 #include "src/iter.h"
 #include "swift/env.h"
 #include "table/sst_table.h"
@@ -185,6 +186,50 @@ namespace shannon {
     return s;
   }
 
+  Status KVImpl::Read(const ReadOptions& options, ReadBatch* my_batch,
+		      std::vector<std::string>* values) {
+    Status s;
+    unsigned int failed_cmd_count;
+    if (my_batch == NULL || values == NULL) {
+      return Status::InvalidArgument("batch or values not is null");
+    }
+    if (!ReadBatchInternal::Valid(my_batch)) {
+      fprintf(stderr, "%s readbatch is not valid\n", __FUNCTION__);
+      return Status::Corruption();
+    }
+    ReadBatchInternal::SetHandle(my_batch, db_);
+    // set fill cache
+    if (options.fill_cache) {
+      ReadBatchInternal::SetFillCache(my_batch, 1);
+    } else {
+      ReadBatchInternal::SetFillCache(my_batch, 0);
+    }
+    // set snapshot
+    ReadBatchInternal::SetSnapshot(my_batch, (options.snapshot != NULL
+        ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0));
+    ReadBatchInternal::SetFailedCmdCount(my_batch, &failed_cmd_count);
+    int ret = ioctl(fd_, READ_BATCH, ReadBatchInternal::Contents(my_batch).data());
+    if (ret < 0) {
+      return Status::IOError(strerror(errno));
+    }
+    const std::vector<char*> c_values = ReadBatchInternal::GetValues(my_batch);
+
+    for (auto cstr : c_values) {
+      unsigned int return_status, value_len_addrs;
+      char *v = cstr + sizeof(unsigned int) * 2;
+      memcpy(&return_status, cstr, sizeof(unsigned int));
+      memcpy(&value_len_addrs, cstr + sizeof(unsigned int), sizeof(unsigned int));
+      if (return_status == READBATCH_SUCCESS) {
+        std::string tvalue;
+        tvalue.assign(v, value_len_addrs);
+        values->push_back(tvalue);
+      } else {
+        values->push_back(std::string(""));
+      }
+    }
+    return Status::OK();
+  }
+
   Status KVImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
     Status s;
 
@@ -195,8 +240,7 @@ namespace shannon {
     WriteBatchInternal::SetHandle(my_batch, db_);
     if (options.fill_cache) {
       WriteBatchInternal::SetFillCache(my_batch, 1);
-    }
-    else {
+    } else {
       WriteBatchInternal::SetFillCache(my_batch, 0);
     }
     int ret = ioctl(fd_, WRITE_BATCH, WriteBatchInternal::Contents(my_batch).data());
