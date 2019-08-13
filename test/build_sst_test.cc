@@ -163,7 +163,19 @@ int main(int argc, char *argv[]) {
       key_size = strtoul(optarg, NULL, 10);
       break;
     case OPT_VALUE_SIZE:
-      value_size = strtoul(optarg, NULL, 10);
+      len = strtol(optarg, &endptr, 10);
+      switch (*endptr) {
+      case 'g':
+      case 'G':
+        len <<= 10;
+      case 'm':
+      case 'M':
+        len <<= 10;
+      case 'k':
+      case 'K':
+        len <<= 10;
+      }
+      value_size = len;
       break;
     case OPT_NUM:
       times = strtoul(optarg, NULL, 10);
@@ -199,6 +211,7 @@ int main(int argc, char *argv[]) {
             max_filesize, options.target_file_size_base);
     return -EINVAL;
   }
+  cout << "key_size=" << key_size << ", value_size=" << value_size << endl;
   value = (char *)malloc(value_size);
   if (!value) {
     printf("----malloc value failed !!!!\n");
@@ -220,14 +233,15 @@ int main(int argc, char *argv[]) {
 
   cf_des.push_back(ColumnFamilyDescriptor("default", cf_option));
   for (i = 0; i < times; i++) {
-    snprintf(keybuf, sizeof(keybuf), "key%d", i);
+    snprintf(key, key_size, "key%d", i);
     snprintf(valbuf, sizeof(valbuf), "value%d", i);
-    memcpy(key, keybuf, strlen(keybuf));
     memcpy(value, valbuf, strlen(valbuf));
-    status = db->Put(shannon::WriteOptions(), key, value);
+    status = db->Put(shannon::WriteOptions(), Slice(key, strlen(key)), Slice(value, value_size));
   }
+  cout << "fill db finished" << endl;
+  delete db;
   status = shannon::DB::Open(db_options, dbname, device, cf_des, &handles, &db);
-  iter = db->NewIterator(shannon::ReadOptions());
+  iter = db->NewIterator(shannon::ReadOptions(), handles[0]);
   assert(status.ok());
   iter->SeekToFirst();
   clock_t begin = clock();
