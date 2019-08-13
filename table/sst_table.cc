@@ -330,7 +330,7 @@ static Status DecodeDataBlockOneRecord(KvNode *kv, Slice *input,
 
   // get value
   kv->value_len = value_len;
-  if (!key_is_user_key && kv->type == kTypeDeletion) {
+  if (!key_is_user_key && kv->type == kSstTypeDeletion) {
     kv->value = NULL;
     if (kv->value_len != 0) { // FIXME
       DEBUG("corrupted value_len for delete type\n");
@@ -406,7 +406,7 @@ Status ProcessOneKv(BlockRep *rep, KvNode *kv) {
     goto out;
   }
 
-  if (kv->type == kTypeValue && kv->key && kv->value) {
+  if (kv->type == kSstTypeValue && kv->key && kv->value) {
     key = Slice((const char *)kv->key, kv->key_len);
     value = Slice((const char *)kv->value, kv->value_len);
   batch_put_try:
@@ -427,7 +427,7 @@ Status ProcessOneKv(BlockRep *rep, KvNode *kv) {
       goto out;
     }
     rep->kv_put_count++;
-  } else if (kv->type == kTypeDeletion && kv->key) {
+  } else if (kv->type == kSstTypeDeletion && kv->key) {
     key = Slice((const char *)kv->key, kv->key_len);
   batch_delete_try:
     if (opt->cf == NULL)
@@ -1017,7 +1017,7 @@ build_again:
       const Slice value = iter->value();
       string result;
       AppendInternalKey(&result,
-                        ParsedInternalKey(key, iter->timestamp(), kTypeValue));
+                        ParsedInternalKey(key, iter->timestamp(), kSstTypeValue));
       const Slice add_key(result);
       builder->Add(add_key, value);
       if (builder->CurFileSize() > file_size * number) {

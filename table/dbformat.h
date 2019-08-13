@@ -25,7 +25,7 @@ static const int kReadBytesPeriod = 1048576;
 
 class InternalKey;
 
-static const ValueType kValueTypeForSeek = kTypeValue;
+static const ValueType kValueTypeForSeek = kSstTypeValue;
 
 typedef uint64_t SequenceNumber;
 
@@ -149,7 +149,7 @@ inline bool ParseInternalKey(const Slice &internal_key,
   result->sequence = num >> 8;
   result->type = static_cast<ValueType>(c);
   result->user_key = Slice(internal_key.data(), n - 8);
-  return (c <= static_cast<unsigned char>(kTypeValue));
+  return (c <= static_cast<unsigned char>(kSstTypeValue));
 }
 } // namespace shannon
 

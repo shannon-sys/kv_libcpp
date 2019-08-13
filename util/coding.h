@@ -16,6 +16,10 @@
 namespace shannon {
 
 enum ValueType {
+  // For SST
+  kSstTypeDeletion = 0,
+  kSstTypeValue = 1,
+  // For write_batch cmd_type
   kTypeDeletion = 2,
   kTypeValue = 3
 };
