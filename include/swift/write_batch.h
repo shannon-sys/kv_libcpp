@@ -7,6 +7,7 @@
 #define SHANNON_DB_INCLUDE_WRITE_BATCH_H_
 
 #include <string>
+#include <vector>
 #include <linux/types.h>
 #include <list>
 #include "status.h"
@@ -44,12 +45,14 @@ class WriteBatch {
   };
   Status Iterate(Handler* handler) const;
 
+  // SetOffset because string address will change when append
+  void SetOffset();
  private:
   friend class WriteBatchInternal;
 
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
   std::string value_;
-
+  std::vector<std::pair<int64_t,int64_t> > offset_;
 };
 
 class WriteBatchNonatomic {
@@ -83,13 +86,13 @@ class WriteBatchNonatomic {
     virtual void Delete(const Slice& key) = 0;
   };
   Status Iterate(Handler* handler) const;
-
+  void SetOffset();
  private:
   friend class WriteBatchInternalNonatomic;
 
   std::string rep_;  // See comment in write_batch.cc for the format of rep_
   std::string value_;
-
+  std::vector<std::pair<int64_t,int64_t> > offset_;
 };
 }
 #endif  // SHANNON_DB_INCLUDE_WRITE_BATCH_H_
