@@ -102,6 +102,7 @@ class KVImpl : public DB {
   const std::string dbname_;
   const std::string device_;
   ColumnFamilyHandleImpl* default_cf_handle_; // default column_family handle
+  bool is_default_open_;
   std::vector<ColumnFamilyHandle*> handles_;
   Status Open();
   Status Open(const DBOptions& db_options,

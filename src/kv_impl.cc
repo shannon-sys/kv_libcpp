@@ -34,6 +34,7 @@ namespace shannon {
        dbname_(dbname),
        device_(device) {
        default_cf_handle_ = NULL;
+       is_default_open_ = false;
     }
 
   Status KVImpl::Open() {
@@ -45,6 +46,7 @@ namespace shannon {
     s = this->Open(options_, column_family_descriptors, &column_family_handles);
     if (s.ok()) {
         default_cf_handle_ = dynamic_cast<ColumnFamilyHandleImpl* >(column_family_handles[0]);
+        is_default_open_ = true;
     }
     return s;
   }
@@ -140,6 +142,9 @@ namespace shannon {
             }
         }
     }
+    /* set default handle */
+    if (handles->size() > 0)
+      default_cf_handle_ = dynamic_cast<ColumnFamilyHandleImpl*>((*handles)[0]);
     for (int i = 0; i < (*handles).size(); ++i) {
         (*handles)[i]->SetDescriptor(column_families[i]);
     }
@@ -151,7 +156,7 @@ namespace shannon {
       close(fd_);
       fd_ = 0;
     }
-    if (default_cf_handle_){
+    if (is_default_open_ && default_cf_handle_) {
       delete default_cf_handle_;
       default_cf_handle_ = NULL;
     }
