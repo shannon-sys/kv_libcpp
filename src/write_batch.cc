@@ -14,12 +14,12 @@ namespace shannon {
 extern const size_t kHeader = sizeof(struct write_batch_header);
 
 WriteBatch::WriteBatch() {
-  value_.reserve(MAX_BATCH_SIZE);
+  value_.reserve(MEM_RESET_SIZE);
   Clear();
 }
 //write_batch_with_index
 WriteBatch::WriteBatch(size_t reserved_bytes, size_t max_bytes) {
-  value_.reserve(MAX_BATCH_SIZE);
+  value_.reserve(MEM_RESET_SIZE);
   rep_.reserve((reserved_bytes > kHeader) ?
     reserved_bytes :kHeader);
   rep_.resize(kHeader);
@@ -33,6 +33,7 @@ void WriteBatch::Clear() {
   rep_.clear();
   rep_.resize(kHeader);
   value_.clear();
+  offset_.clear();
 }
 
 Status WriteBatch::Iterate(Handler* handler) const {
@@ -133,6 +134,7 @@ Status WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
               (reinterpret_cast<const ColumnFamilyHandle *>(column_family))->GetID()));
     PutFixed32(&rep_, key.size());
     PutFixed32(&rep_, value.size());
+    offset_.push_back({rep_.size(),value_.size()});
     value_.append(value.data(), value.size());
     PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
     PutSliceData(&rep_, key);
@@ -162,6 +164,7 @@ Status WriteBatch::Put(const Slice& key, const Slice& value) {
   PutFixed32(&rep_, static_cast<int>(0));
   PutFixed32(&rep_, key.size());
   PutFixed32(&rep_, value.size());
+  offset_.push_back({rep_.size(),value_.size()});
   value_.append(value.data(), value.size());
   PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
   PutSliceData(&rep_, key);
@@ -217,9 +220,19 @@ Status WriteBatch::Delete(const Slice& key) {
   return Status::OK();
 }
 
+void WriteBatch::SetOffset() {
+  if (value_.size() < MEM_RESET_SIZE) {
+    return ;
+  } else {
+    for (auto iter: offset_ ) {
+      SetFixedAlign(const_cast<char*>(rep_.data()+iter.first),
+        const_cast<char*>(value_.data()+iter.second));
+    }
+  }
+}
 // WriteBatchNonatomic
 WriteBatchNonatomic::WriteBatchNonatomic() {
-  value_.reserve(MAX_BATCH_SIZE);
+  value_.reserve(MEM_RESET_SIZE);
   Clear();
 }
 
@@ -231,6 +244,7 @@ void WriteBatchNonatomic::Clear() {
   rep_.clear();
   rep_.resize(kHeader);
   value_.clear();
+  offset_.clear();
 }
 
 Status WriteBatchNonatomic::Iterate(Handler* handler) const {
@@ -335,6 +349,7 @@ Status WriteBatchNonatomic::Put(ColumnFamilyHandle* column_family, const Slice& 
               (reinterpret_cast<const ColumnFamilyHandle *>(column_family))->GetID()));
     PutFixed32(&rep_, key.size());
     PutFixed32(&rep_, value.size());
+    offset_.push_back({rep_.size(),value_.size()});
     value_.append(value.data(), value.size());
     PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
     PutSliceData(&rep_, key);
@@ -364,6 +379,7 @@ Status WriteBatchNonatomic::Put(const Slice& key, const Slice& value, __u64 time
   PutFixed32(&rep_, static_cast<int>(0));
   PutFixed32(&rep_, key.size());
   PutFixed32(&rep_, value.size());
+  offset_.push_back({rep_.size(),value_.size()});
   value_.append(value.data(), value.size());
   PutFixedAlign(&rep_, value_.data() + value_.size() - value.size());
   PutSliceData(&rep_, key);
@@ -427,4 +443,14 @@ Status WriteBatchNonatomic::Delete(const Slice& key, __u64 timestamp) {
   return Status::OK();
 }
 
+void WriteBatchNonatomic::SetOffset() {
+  if (value_.size() < MEM_RESET_SIZE) {
+    return ;
+  } else {
+    for (auto iter: offset_ ) {
+      SetFixedAlign(const_cast<char*>(rep_.data()+iter.first),
+        const_cast<char*>(value_.data()+iter.second));
+    }
+  }
+}
 }

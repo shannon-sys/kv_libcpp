@@ -248,6 +248,7 @@ namespace shannon {
     } else {
       WriteBatchInternal::SetFillCache(my_batch, 0);
     }
+    my_batch->SetOffset();
     int ret = ioctl(fd_, WRITE_BATCH, WriteBatchInternal::Contents(my_batch).data());
     if (ret < 0) {
       return Status::IOError(strerror(errno));
@@ -269,6 +270,7 @@ namespace shannon {
     else {
       WriteBatchInternalNonatomic::SetFillCache(my_batch, 0);
     }
+    my_batch->SetOffset();
     int ret = ioctl(fd_, WRITE_BATCH_NONATOMIC, WriteBatchInternalNonatomic::Contents(my_batch).data());
     if (ret < 0) {
       return Status::IOError(strerror(errno));

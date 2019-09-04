@@ -6,7 +6,11 @@
             PutFixed32(des, (size_t) (src));  \
           else if (sizeof(size_t) == 8)       \
             PutFixed64(des, (size_t) (src));
-
+#define SetFixedAlign(des, src)               \
+          if (sizeof(size_t) == 4)            \
+            EncodeFixed32(des, (size_t) (src));  \
+          else if (sizeof(size_t) == 8)       \
+            EncodeFixed64(des, (size_t) (src));
 #ifndef FALLTHROUGH_INTENDED
 #if defined(__clang__)
 #define FALLTHROUGH_INTENDED [[clang::fallthrough]]
