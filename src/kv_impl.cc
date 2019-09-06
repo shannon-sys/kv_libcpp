@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <algorithm>
 #include <sstream>
+#include <assert.h>
 #include "src/kv_impl.h"
 #include "src/venice_kv.h"
 #include "src/venice_ioctl.h"
@@ -21,6 +22,7 @@
 #include "src/read_batch_internal.h"
 #include "src/iter.h"
 #include "swift/env.h"
+#include "swift/read_batch.h"
 #include "table/sst_table.h"
 
 using namespace std;
@@ -218,19 +220,74 @@ namespace shannon {
       return Status::IOError(strerror(errno));
     }
     const std::vector<char*> c_values = ReadBatchInternal::GetValues(my_batch);
-
-    for (auto cstr : c_values) {
+    // get readbatch data
+    ReadBatch read_batch;
+    std::vector<int> reread_index;
+    for (int i = 0; i < c_values.size(); i ++) {
       unsigned int return_status, value_len_addrs;
-      char *v = cstr + sizeof(unsigned int) * 2;
-      memcpy(&return_status, cstr, sizeof(unsigned int));
-      memcpy(&value_len_addrs, cstr + sizeof(unsigned int), sizeof(unsigned int));
+      int cmd_offset;
+      char *cstr = c_values[i];
+      char *v = cstr + sizeof(int) * 3;
+      memcpy(&cmd_offset, cstr, sizeof(int));
+      memcpy(&return_status, cstr + sizeof(int) , sizeof(int));
+      memcpy(&value_len_addrs, cstr + sizeof(int) * 2, sizeof(int));
+      struct readbatch_cmd *cmd = reinterpret_cast<struct readbatch_cmd*>(const_cast<char*>(my_batch->rep_.data() + cmd_offset));
       if (return_status == READBATCH_SUCCESS) {
         std::string tvalue;
-        tvalue.assign(v, value_len_addrs);
+        if (value_len_addrs > cmd->value_buf_size) {
+          struct readbatch_cmd *cmd = reinterpret_cast<struct readbatch_cmd*>(const_cast<char*>(my_batch->rep_.data() + cmd_offset));
+          read_batch.Get(cmd->cf_index, shannon::Slice(cmd->key, cmd->key_len), value_len_addrs);
+          reread_index.push_back(i);
+          tvalue = "";
+        } else {
+          tvalue.assign(v, value_len_addrs);
+        }
         values->push_back(tvalue);
       } else {
         values->push_back(std::string(""));
       }
+    }
+    // reread
+    if (reread_index.size() > 0) {
+      if (!ReadBatchInternal::Valid(&read_batch)) {
+        fprintf(stderr, "%s readbatch is not valid\n", __FUNCTION__);
+        return Status::Corruption();
+      }
+      ReadBatchInternal::SetHandle(&read_batch, db_);
+      // set fill cache
+      if (options.fill_cache) {
+        ReadBatchInternal::SetFillCache(&read_batch, 1);
+      } else {
+        ReadBatchInternal::SetFillCache(&read_batch, 0);
+      }
+      // set snapshot
+      ReadBatchInternal::SetSnapshot(&read_batch, (options.snapshot != NULL
+          ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0));
+      ReadBatchInternal::SetFailedCmdCount(&read_batch, &failed_cmd_count);
+      int ret = ioctl(fd_, READ_BATCH, ReadBatchInternal::Contents(&read_batch).data());
+      if (ret < 0) {
+        return Status::IOError(strerror(errno));
+      }
+      const std::vector<char*> n_c_values = ReadBatchInternal::GetValues(&read_batch);
+      for (int i = 0; i < n_c_values.size(); i ++) {
+        unsigned int return_status, value_len_addrs;
+        int cmd_offset;
+        char *cstr = n_c_values[i];
+        char *v = cstr + sizeof(int) * 3;
+        memcpy(&cmd_offset, cstr, sizeof(int));
+        memcpy(&return_status, cstr + sizeof(int), sizeof(int));
+        memcpy(&value_len_addrs, cstr + sizeof(int) * 2, sizeof(int));
+        struct readbatch_cmd *cmd = reinterpret_cast<struct readbatch_cmd*>(const_cast<char*>(read_batch.rep_.data() + cmd_offset));
+        assert(cmd->value_buf_size == value_len_addrs);
+        if (return_status == READBATCH_SUCCESS) {
+          std::string value;
+          value.assign(v, value_len_addrs);
+          (*values)[reread_index[i]] = value;
+        } else {
+          // do nothing
+        }
+      }
+      read_batch.Clear();
     }
     return Status::OK();
   }

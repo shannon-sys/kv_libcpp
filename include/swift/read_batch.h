@@ -14,6 +14,10 @@
 namespace shannon {
 class Slice;
 class ColumnFamilyHandle;
+#define READ_BATCH_INIT_VALUE_SIZE 4096
+#define POINTER_SIZE (sizeof(size_t))
+#define TYPE_SIZE(type, n) (sizeof(type) * n)
+
 class ReadBatch {
  public:
   ReadBatch();
@@ -42,9 +46,11 @@ class ReadBatch {
 
  private:
   friend class ReadBatchInternal;
-
+  friend class KVImpl;
+  Status Get(int column_family_id, const Slice& key, int value_buf_size = READ_BATCH_INIT_VALUE_SIZE);
   std::string rep_;
   std::vector<char*> values_;
+  std::vector<int> column_family_ids_;
 };
 
 }

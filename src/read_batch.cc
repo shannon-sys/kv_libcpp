@@ -125,31 +125,11 @@ int ReadBatchInternal::Count(const ReadBatch* b) {
 }
 
 Status ReadBatch::Get(ColumnFamilyHandle* column_family, const Slice& key) {
-    size_t byte_size = ReadBatchInternal::ByteSize(this);
-    int count = ReadBatchInternal::Count(this);
-    if (column_family == NULL || key.data() == NULL || key.size() <= 0)
-        return Status::Corruption("format error: key , value or column family.");
-    if ((byte_size + sizeof(struct readbatch_cmd) + key.size() > MAX_BATCH_SIZE) ||
-        (count >= MAX_READBATCH_COUNT)) {
-        return Status::BatchFull();
+    if (column_family == NULL) {
+      return Status::InvalidArgument("column family is not null!");
     }
-    ReadBatchInternal::SetCount(this, ReadBatchInternal::Count(this) + 1);
-    PutFixed64(&rep_, static_cast<uint64_t>(CMD_START_MARK));
-    PutFixed32(&rep_, static_cast<int>(GET_TYPE));
-    PutFixed32(&rep_, static_cast<int>(
-              (reinterpret_cast<const ColumnFamilyHandle *>(column_family))->GetID()));
-    PutFixed32(&rep_, MAX_VALUE_SIZE);
-    PutFixed32(&rep_, key.size());
-    // append a element
-    char *value = new char[MAX_VALUE_SIZE];
-    values_.push_back(value);
-    // copy value address
-    PutFixedAlign(&rep_, values_[values_.size() - 1] + sizeof(unsigned int) * 2); // values
-    PutFixedAlign(&rep_, values_[values_.size() - 1] + sizeof(unsigned int));     // value_len_addrs
-    PutFixedAlign(&rep_, values_[values_.size() - 1]);                            // return_status
-    PutSliceData(&rep_, key);
-    ReadBatchInternal::SetSize(this, ReadBatchInternal::ByteSize(this));
-    return Status::OK();
+    return Get(static_cast<int>((
+        reinterpret_cast<const ColumnFamilyHandle *>(column_family))->GetID()), key);
 }
 
 size_t ReadBatch::GetDataSize() const {
@@ -157,6 +137,10 @@ size_t ReadBatch::GetDataSize() const {
 }
 
 Status ReadBatch::Get(const Slice& key) {
+  return Get(0, key);
+}
+
+Status ReadBatch::Get(int column_family_id, const Slice& key, int value_buf_size) {
   size_t byte_size = ReadBatchInternal::ByteSize(this);
   int count = ReadBatchInternal::Count(this);
   if (key.data() == NULL || key.size() <= 0)
@@ -165,22 +149,25 @@ Status ReadBatch::Get(const Slice& key) {
       (count >= MAX_BATCH_COUNT)) {
     return Status::BatchFull();
   }
+  char *value = new char[value_buf_size + TYPE_SIZE(unsigned int, 3)];
+  EncodeFixed32(value, rep_.size());                                    // save current cmd position
+
   ReadBatchInternal::SetCount(this, ReadBatchInternal::Count(this) + 1);
   PutFixed64(&rep_, static_cast<uint64_t>(CMD_START_MARK));
   PutFixed32(&rep_, static_cast<uint64_t>(GET_TYPE));
-  PutFixed32(&rep_, static_cast<int>(0));
-  PutFixed32(&rep_, MAX_VALUE_SIZE);
+  PutFixed32(&rep_, column_family_id);
+  PutFixed32(&rep_, value_buf_size);
   PutFixed32(&rep_, key.size());
   // append a element
-  char *value = new char[MAX_VALUE_SIZE];
   values_.push_back(value);
   // copy value address
-  PutFixedAlign(&rep_, values_[values_.size() - 1] + sizeof(unsigned int) * 2); // values
-  PutFixedAlign(&rep_, values_[values_.size() - 1] + sizeof(unsigned int));     // value_len_addrs
-  PutFixedAlign(&rep_, values_[values_.size() - 1]);                            // return_status
+  PutFixedAlign(&rep_, values_[values_.size() - 1] + TYPE_SIZE(unsigned int, 3)); // values
+  PutFixedAlign(&rep_, values_[values_.size() - 1] + TYPE_SIZE(unsigned int, 2)); // value_len_addrs
+  PutFixedAlign(&rep_, values_[values_.size() - 1] + TYPE_SIZE(unsigned int, 1)); // return_status
   PutSliceData(&rep_, key);
   ReadBatchInternal::SetSize(this, ReadBatchInternal::ByteSize(this));
   return Status::OK();
 }
+
 
 }  // namespace shannon
