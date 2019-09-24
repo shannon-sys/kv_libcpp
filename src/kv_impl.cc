@@ -293,28 +293,43 @@ namespace shannon {
   }
 
   Status KVImpl::Write(const WriteOptions& options, WriteBatch* my_batch) {
-    Status s;
+    if (my_batch == nullptr) {
+      return Status::Corruption("Batch is nullptr!");
+    }
+
+    if (WriteBatchInternal::Count(my_batch) == 0) {
+      return Status::OK();
+    }
 
     if (!WriteBatchInternal::Valid(my_batch)) {
       fprintf(stderr, "%s writebatch is not valid\n", __FUNCTION__);
       return Status::Corruption();
     }
+
     WriteBatchInternal::SetHandle(my_batch, db_);
     if (options.fill_cache) {
       WriteBatchInternal::SetFillCache(my_batch, 1);
     } else {
       WriteBatchInternal::SetFillCache(my_batch, 0);
     }
+
     my_batch->SetOffset();
     int ret = ioctl(fd_, WRITE_BATCH, WriteBatchInternal::Contents(my_batch).data());
     if (ret < 0) {
       return Status::IOError(strerror(errno));
     }
-    return s;
+
+    return Status::OK();
   }
 
   Status KVImpl::WriteNonatomic(const WriteOptions& options, WriteBatchNonatomic* my_batch) {
-    Status s;
+    if (my_batch == nullptr) {
+      return Status::Corruption("Batch is nullptr!");
+    }
+
+    if (WriteBatchInternalNonatomic::Count(my_batch) == 0) {
+      return Status::OK();
+    }
 
     if (!WriteBatchInternalNonatomic::Valid(my_batch)) {
       fprintf(stderr, "%s writebatch is not valid\n", __FUNCTION__);
@@ -332,7 +347,8 @@ namespace shannon {
     if (ret < 0) {
       return Status::IOError(strerror(errno));
     }
-    return s;
+
+    return Status::OK();
   }
 
   Status KVImpl::Put(const WriteOptions& options, const Slice& key, const Slice& value) {
