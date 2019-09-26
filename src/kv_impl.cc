@@ -80,7 +80,7 @@ namespace shannon {
     }
     memset(&handle, 0, sizeof(handle));
     handle.flags = db_options.create_if_missing ? handle.flags | O_DB_CREATE : handle.flags;
-    strncpy(handle.name, dbname_.data(), DB_NAME_LEN);
+    memcpy(handle.name, dbname_.data(), DB_NAME_LEN);
     ret = ioctl(fd_, OPEN_DATABASE, &handle);
     if (ret < 0) {
         std::cout<<"ioctl open database failed!"<<std::endl;
@@ -112,7 +112,7 @@ namespace shannon {
     struct uapi_cf_handle cfhandle;
     cfhandle.db_index = handle.db_index;
     for (auto column_family_descriptor : column_families) {
-        strncpy(cfhandle.name, column_family_descriptor.name.data(),
+        memcpy(cfhandle.name, column_family_descriptor.name.data(),
                 column_family_descriptor.name.length());
         cfhandle.name[column_family_descriptor.name.length()] = '\0';
         int ret = ioctl(fd_, OPEN_COLUMNFAMILY, &cfhandle);
@@ -640,7 +640,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
         return Status::InvalidArgument(strerror(errno));
     }
     cfhandle.db_index = db_;
-    strncpy(cfhandle.name, column_family_name.data(), column_family_name.size());
+    memcpy(cfhandle.name, column_family_name.data(), column_family_name.size());
     cfhandle.name[column_family_name.size()] = '\0';
     ret = ioctl(fd_, CREATE_COLUMNFAMILY, &cfhandle);
     if (ret < 0) {
@@ -706,7 +706,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     cfhandle.cf_index = (reinterpret_cast<const ColumnFamilyHandle* >(column_family))
                         ->GetID();
     cf_name = (reinterpret_cast<const ColumnFamilyHandle* >(column_family))->GetName();
-    strncpy(cfhandle.name, cf_name.data(), cf_name.length());
+    memcpy(cfhandle.name, cf_name.data(), cf_name.length());
     cfhandle.name[cf_name.length()] = '\0';
     ret = ioctl(fd_, REMOVE_COLUMNFAMILY, &cfhandle);
     if (ret < 0) {
@@ -867,7 +867,7 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
       return Status::NotFound(device.data(), strerror(errno));
     }
     memset(&handle, 0, sizeof(handle));
-    strncpy(handle.name, dbname.data(), DB_NAME_LEN);
+    memcpy(handle.name, dbname.data(), DB_NAME_LEN);
     ret = ioctl(fd, OPEN_DATABASE, &handle);
     if (ret < 0) {
       return Status::IOError(dbname.data(), strerror(errno));

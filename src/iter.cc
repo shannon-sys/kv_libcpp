@@ -224,7 +224,7 @@ void KVIter::SeekToLast() {
 
   /* use prefix */
   if (this->prefix_length_ > 0) {
-      strncpy(prefix, prefix_, prefix_length_);
+      memcpy(prefix, prefix_, prefix_length_);
       is_overflow = this->IncreaseOne(prefix, this->prefix_length_);
       prefix[this->prefix_length_] = 0;
       if (is_overflow) {
@@ -276,7 +276,7 @@ void KVIter::SeekForPrev(const Slice& target) {
         status_ = Status::InvalidArgument("key length is too longer.");
         return;
     }
-    strncpy(seek.key, target.data(), target.size());
+    memcpy(seek.key, target.data(), target.size());
     seek.key_len = target.size();
     ret = ioctl(db_->fd_, IOCTL_ITERATOR_SEEK, &seek);
     valid_ = seek.iter.valid_key == 0 ? false : true;
@@ -289,7 +289,7 @@ void KVIter::SetPrefix(const Slice& prefix) {
     if (prefix.size() >= 256) {
         return;
     }
-    strncpy(this->prefix_, prefix.data(), prefix.size());
+    memcpy(this->prefix_, prefix.data(), prefix.size());
     this->prefix_length_ = prefix.size();
 }
 

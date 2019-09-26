@@ -76,7 +76,7 @@ Status DB::ListColumnFamilies(const DBOptions& db_options,
     /* open database */
     memset(&handle, 0, sizeof(handle));
     handle.flags = db_options.create_if_missing ? handle.flags | O_DB_CREATE : handle.flags;
-    strncpy(handle.name, name.data(), name.length());
+    memcpy(handle.name, name.data(), name.length());
     ret = ioctl(fd, OPEN_DATABASE, &handle);
     if (ret < 0) {
         std::cout<<"ioctl open database failed!"<<std::endl;
