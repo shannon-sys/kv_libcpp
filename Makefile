@@ -1,3 +1,42 @@
+# for combined C/C++ library: libshannondb.so
+C_LIB_PATH = ./shannon_db
+C_LIB = $(C_LIB_PATH)/libshannon_db.a
+CPP_LIB_PATH = .
+CPP_LIB = $(CPP_LIB_PATH)/libshannondb_cxx.a
+
+LIB = libshannondb.so
+
+.PHONY: $(C_LIB) $(CPP_LIB) install clean
+
+all: $(LIB)
+
+$(LIB): $(C_LIB) $(CPP_LIB)
+	$(CC) -shared -o ${LIB} -Wl,--whole-archive $(C_LIB) $(CPP_LIB) -Wl,--no-whole-archive -lsnappy -lstdc++
+
+$(C_LIB):
+	+$(MAKE) -C $(C_LIB_PATH)
+
+$(CPP_LIB):
+	+$(MAKE) -C $(CPP_LIB_PATH) cpp
+
+install:
+	install -p -D -m 0755 ${LIB} /usr/lib
+	make install_header -C $(C_LIB_PATH)
+	make cpp_install_header -C $(CPP_LIB_PATH)
+	ldconfig
+
+uninstall:
+	rm -rf /usr/include/swift
+	rm -rf /usr/include/shannon_db.h
+	rm /usr/lib/${LIB}
+
+clean:
+	make clean -C $(C_LIB_PATH)
+	make cpp_clean -C $(CPP_LIB_PATH)
+	rm -rf ${LIB}
+
+# for c++ only library: libshannondb_cxx.so, libshannondb_cxx.a
+
 Target=shannondb_cxx
 LibName=lib${Target}.so
 LibNameStatic=lib${Target}.a
@@ -16,13 +55,13 @@ TESTS = db_test analyze_sst_test build_sst_test log_iter_test log_iter_thread_te
 
 .PHONY: clean test install uninstall
 
-all: ${LibName}
+cpp: ${LibName}
 
 ${LibName}: $(OBJS)
 	g++ $(CXXFLAGS) -g -fPIC --shared $^ -o $@ $(SNAPPY_LIB)
 	ar -rcs ${LibNameStatic} $^
 
-test: $(TESTS)
+cpp_test: $(TESTS)
 
 db_test: test/db_test.c $(OBJS)
 	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB)
@@ -41,23 +80,23 @@ write_batch_test: test/write_batch_test.cc $(OBJS)
 read_batch_test: test/read_batch_test.cc $(OBJS)
 	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB) -lpthread
 
-uninstall:
+cpp_uninstall:
 	rm -rf /usr/include/swift
 	rm /usr/lib/${LibName}
 
-install: install_header install_lib
+cpp_install: install_header install_lib
 	ldconfig
 
-install_header:
+cpp_install_header:
 	rm -rf /usr/include/swift
 	mkdir /usr/include/swift
 	install -p -D -m 0664 include/swift/* /usr/include/swift/
 
-install_lib:
+cpp_install_lib:
 	install -p -D -m 0755 ${LibName} /usr/lib
 
 %.o: %.cc
 	g++ $(CXXFLAGS) -g -fPIC -O2 -I${HEAD} -I. -c $^ -o $@
 
-clean:
+cpp_clean:
 	rm -rf *.o *.so *.a $(TESTS) src/*.o util/*.o table/*.o env/*.o cache/*.o
