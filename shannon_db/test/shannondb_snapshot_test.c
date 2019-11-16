@@ -1,8 +1,10 @@
-#include <shannon_db.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
+#include "../shannon_db.h"
+
 char *phase = "";
 #define BUF_LEN 128
 static void StartPhase(char *name)
@@ -31,6 +33,112 @@ static void CheckEqual(char *expected, const char *v, size_t n)
 		abort();
 	}
 }
+
+struct io_thread {
+	int id;
+	pthread_t tid;
+	struct io_check *check;
+};
+
+struct io_check {
+	int nthread;
+	struct io_thread *thread;
+	struct shannon_db *db;
+	int loop;
+	int err;
+};
+
+void *run_thread(void *args)
+{
+	struct io_thread *thread = NULL;
+	struct io_check *check = NULL;
+	struct shannon_db *db = NULL;
+	char *err = NULL;
+	int i;
+
+	thread = (struct io_thread *)args;
+	check  = thread->check;
+	db = check->db;
+
+	for (i = 0; i < check->loop; ++i) {
+		if (check->err) {
+			break;
+		}
+		__u64 timestamp = shannon_db_create_snapshot(db, &err);
+		if (err) {
+			fprintf(stderr, "create snapshot failed: %s\n", err);
+			check->err = -1;
+			break;
+		}
+		shannon_db_release_snapshot(db, timestamp, &err);
+		if (err) {
+			fprintf(stderr, "release snapshot failed: %s, timestamp=0x%016llx\n", err, timestamp);
+			check->err = -1;
+			break;
+		}
+	}
+
+	return NULL;
+}
+
+int test_snapshot_multi_thread(struct shannon_db *db, int thread_num, int loop)
+{
+	struct io_check *check = NULL;
+	struct io_thread *thread = NULL;
+	int status;
+	int i;
+	int ret = -1;
+
+	check = malloc(sizeof(*check));
+	if (check == NULL) {
+		fprintf(stderr, "create io_check failed.\n");
+		return -1;
+	}
+	memset(check, 0, sizeof(*check));
+	check->nthread = thread_num;
+	check->loop = loop;
+	check->db = db;
+	check->err = 0;
+	check->thread = malloc(sizeof(*check->thread) * thread_num);
+	if (NULL == check->thread) {
+		fprintf(stderr, "malloc check->thread failed.\n");
+		ret = EXIT_FAILURE;
+		goto out;
+	}
+	for (i = 0; i < thread_num; i++) {
+		thread = check->thread + i;
+		thread->id = i;
+		thread->check = check;
+	}
+
+	for (i = 0; i < thread_num; i++) {
+		thread = check->thread + i;
+		status = pthread_create(&check->thread[i].tid, NULL, run_thread, (void *)(check->thread + i));
+		if (status) {
+			fprintf(stderr, "pthread_create failed[%d]: %s\n", i, strerror(status));
+			ret = EXIT_FAILURE;
+			goto out;
+		}
+	}
+	for (i = 0; i < thread_num; i++) {
+		status = pthread_join(check->thread[i].tid, NULL);
+		if (status) {
+			fprintf(stderr, "pthread_join failed[%d]: %s\n", i, strerror(status));
+			ret = EXIT_FAILURE;
+			goto out;
+		}
+	}
+	ret = check->err;
+out:
+	if (check) {
+		if (check->thread) {
+			free(check->thread);
+		}
+		free(check);
+	}
+	return ret;
+}
+
 int test_snapshot_create(struct shannon_db *db, struct db_readoptions *roptions, struct db_writeoptions *woptions)
 {
 	int loop_times = 100;
@@ -266,6 +374,9 @@ int main()
 	struct db_writeoptions *woptions;
 	char *err = NULL;
 	char *dbname = "test.db";
+	int ret;
+	int i;
+
 	StartPhase("create_objects");
 	CheckCondition(dbname != NULL);
 	options = shannon_db_options_create();
@@ -280,6 +391,17 @@ int main()
 		printf("test_snapshot shannondb_put failed\n");
 		exit(-1);
 	}
+	StartPhase("snapshot-multi-thread");
+	{
+		for (i = 0; i < 10; i++) {
+			ret = test_snapshot_multi_thread(db, 16, 1000000);
+			if (ret) {
+				fprintf(stderr, "test_snapshot_multi_thread failed\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+	}
+
 	StartPhase("snapshot");
 	{
 		StartPhase("test_snapshot_create multi times");

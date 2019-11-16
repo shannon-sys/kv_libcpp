@@ -47,7 +47,7 @@ writebatch_test: test/shannondb_writebatch_test.c $(OBJS)
 writebatch_nonatomic_test: test/shannondb_writebatch_nonatomic_test.c $(OBJS)
 	 $(CC) $(CFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB) -lpthread
 snapshot_test: test/shannondb_snapshot_test.c $(OBJS)
-	 $(CC) $(CFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB)
+	 $(CC) $(CFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB) -lpthread
 iterator_test: test/shannondb_iterator_test.c $(OBJS)
 	 $(CC) $(CFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB)
 prefixiterator_test: test/shannondb_prefixiterator_test.c $(OBJS)
