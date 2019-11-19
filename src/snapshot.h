@@ -11,16 +11,20 @@ namespace shannon {
 
 class SnapshotImpl : public Snapshot {
  public:
-  uint64_t timestamp_;  // const after creation
-
   void Delete(const SnapshotImpl* s) {
     delete s;
   }
 
   virtual SequenceNumber GetSequenceNumber() const {
-    return timestamp_;
+    return snapshot_id_;
   }
 
+  virtual void SetSequenceNumber(SequenceNumber seq) {
+    snapshot_id_ = seq;
+  }
+
+ private:
+  SequenceNumber snapshot_id_;  // const after creation
 };
 
 }  // namespace shannon

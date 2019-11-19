@@ -7,7 +7,7 @@
 struct uapi_snapshot {
 	int db;
 	int reserved;
-	__u64 timestamp;
+	__u64 snapshot_id;
 };
 
 struct uapi_checkpoint {
@@ -71,7 +71,7 @@ struct read_batch_header {
 };
 
 struct venice_kv {
-	__u64 timestamp;
+	__u64 snapshot_id;
 	int db;
 	int cf_index;
 	int sync;
@@ -86,7 +86,7 @@ struct venice_kv {
 };
 
 struct uapi_key_status {
-	__u64 timestamp;
+	__u64 snapshot_id;
 	int db_index;
 	int cf_index;
 	int key_len;
@@ -371,5 +371,12 @@ struct uapi_get_property {
 #define PROPERTY_VERSION "shannon.version"
 #define PROPERTY_CAPACITY "shannon.capacity"
 #define PROPERTY_OVERPROVISION "shannon.overprovision"
+
+struct uapi_raw_block {
+	__u64 pba;
+	int size;
+	char *buf;
+	__u64 *metadatas;
+};
 
 #endif /* end of __VENICE_KV__ */

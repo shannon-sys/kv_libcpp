@@ -7,7 +7,7 @@
 struct uapi_snapshot {
 	int db;
 	int reserved;
-	__u64 timestamp;
+	__u64 snapshot_id;
 };
 
 struct uapi_checkpoint {
@@ -71,7 +71,7 @@ struct read_batch_header {
 };
 
 struct venice_kv {
-	__u64 timestamp;
+	__u64 snapshot_id;
 	int db;
 	int cf_index;
 	int sync;
@@ -86,7 +86,7 @@ struct venice_kv {
 };
 
 struct uapi_key_status {
-	__u64 timestamp;
+	__u64 snapshot_id;
 	int db_index;
 	int cf_index;
 	int key_len;
@@ -169,7 +169,8 @@ struct uapi_dev_status {
 	__u64 total_wl_sectors;
 	__u64 total_err_recover_sectors;
 
-	__u32 gc_bandwidth;
+	__u32 gc_write_bandwidth;
+	__u32 gc_read_bandwidth;
 	__u32 wl_bandwidth;
 	__u32 err_recover_bandwidth;
 
@@ -179,6 +180,7 @@ struct uapi_dev_status {
 	__u64 disk_usage;
 	__u64 est_disk_usage;
 
+	__u32 dynamic_bad_blkcnt;
 };
 
 struct uapi_db_handle {
@@ -355,6 +357,26 @@ struct uapi_miter_get_option {
 	__u64 pba;
 	__u64 timestamp;
 	char key[256];
+};
+
+struct uapi_get_property {
+	int db_index;
+	int cf_index;
+#define PROPERTY_BUF_SIZE 256
+	char prop_name[PROPERTY_BUF_SIZE];
+	char prop_val[PROPERTY_BUF_SIZE];
+};
+
+#define PROPERTY_NAME "shannon.name"
+#define PROPERTY_VERSION "shannon.version"
+#define PROPERTY_CAPACITY "shannon.capacity"
+#define PROPERTY_OVERPROVISION "shannon.overprovision"
+
+struct uapi_raw_block {
+	__u64 pba;
+	int size;
+	char *buf;
+	__u64 *metadatas;
 };
 
 #endif /* end of __VENICE_KV__ */

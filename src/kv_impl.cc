@@ -21,6 +21,7 @@
 #include "src/write_batch_internal.h"
 #include "src/read_batch_internal.h"
 #include "src/iter.h"
+#include "src/snapshot.h"
 #include "swift/env.h"
 #include "swift/read_batch.h"
 #include "table/sst_table.h"
@@ -213,7 +214,7 @@ namespace shannon {
     }
     // set snapshot
     ReadBatchInternal::SetSnapshot(my_batch, (options.snapshot != NULL
-        ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0));
+        ? options.snapshot->GetSequenceNumber() : 0));
     ReadBatchInternal::SetFailedCmdCount(my_batch, &failed_cmd_count);
     int ret = ioctl(fd_, READ_BATCH, ReadBatchInternal::Contents(my_batch).data());
     if (ret < 0) {
@@ -262,7 +263,7 @@ namespace shannon {
       }
       // set snapshot
       ReadBatchInternal::SetSnapshot(&read_batch, (options.snapshot != NULL
-          ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0));
+          ? options.snapshot->GetSequenceNumber() : 0));
       ReadBatchInternal::SetFailedCmdCount(&read_batch, &failed_cmd_count);
       int ret = ioctl(fd_, READ_BATCH, ReadBatchInternal::Contents(&read_batch).data());
       if (ret < 0) {
@@ -401,8 +402,8 @@ namespace shannon {
     kv.value = buf;
     kv.value_buf_size = MAX_VALUE_SIZE;
     kv.fill_cache = options.fill_cache ? 1 : 0;
-    kv.timestamp = options.snapshot != NULL
-        ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0;
+    kv.snapshot_id = options.snapshot != NULL
+        ? options.snapshot->GetSequenceNumber() : 0;
     int ret = ioctl(fd_, GET_KV, &kv);
     if (ret < 0) {
         free(buf);
@@ -433,8 +434,8 @@ namespace shannon {
         (reinterpret_cast<const ColumnFamilyHandle* >(column_family))->GetID();
     status.key = (char *)key.data();
     status.key_len = key.size();
-    status.timestamp = options.snapshot != NULL
-        ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0;
+    status.snapshot_id = options.snapshot != NULL
+        ? options.snapshot->GetSequenceNumber() : 0;
     int ret = ioctl(fd_, IOCTL_KEY_STATUS, &status);
     if (ret < 0)
       return Status::IOError(key.data());
@@ -519,8 +520,8 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
       status_ = Status::IOError("ioctl create_snapshot failed!!!\n");
       return NULL;
     }
-    SnapshotImpl* snapshot = new SnapshotImpl;
-    snapshot->timestamp_ = snap.timestamp;
+    Snapshot* snapshot = new SnapshotImpl;
+    snapshot->SetSequenceNumber(snap.snapshot_id);
     return snapshot;
   }
 
@@ -529,7 +530,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     int ret = 0;
     Status s;
     snap.db = db_;
-    snap.timestamp = reinterpret_cast<const SnapshotImpl*>(snapshot)->timestamp_;
+    snap.snapshot_id = snapshot->GetSequenceNumber();
     ret = ioctl(fd_, RELEASE_SNAPSHOT, &snap);
     if (ret < 0) {
       return Status::IOError("ioctl release_snapshot failed!!!\n");
@@ -558,7 +559,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     }
     iter->db_index = this->db_;
     iter->timestamp = options.snapshot != NULL
-        ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0;
+        ? options.snapshot->GetSequenceNumber() : 0;
     iter->only_read_key = options.only_read_key ? 1 : 0;
     iter->iters[0].cf_index = column_family->GetID();
     iter->iters[0].db_index = this->db_;
@@ -595,7 +596,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     }
     /* set parameter and create iterator */
     iter->timestamp = options.snapshot != NULL
-        ? reinterpret_cast<const SnapshotImpl*>(options.snapshot)->timestamp_ : 0;
+        ? options.snapshot->GetSequenceNumber() : 0;
     iter->db_index = (unsigned int)this->db_;
     iter->count = column_families.size();
     iter->only_read_key = options.only_read_key ? 1 : 0;

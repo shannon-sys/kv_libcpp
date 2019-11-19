@@ -417,10 +417,10 @@ __u64 shannon_db_create_snapshot(struct shannon_db *db, char **err)
 		*err = p;
 		return (__u64)0;
 	}
-	return opt.timestamp;
+	return opt.snapshot_id;
 }
 
-void shannon_db_release_snapshot(struct shannon_db *db, __u64 timestamp, char **err)
+void shannon_db_release_snapshot(struct shannon_db *db, __u64 snapshot_id, char **err)
 {
 	int fd, ret;
 	struct uapi_snapshot opt;
@@ -429,11 +429,11 @@ void shannon_db_release_snapshot(struct shannon_db *db, __u64 timestamp, char **
 	*err = NULL;
 	memset(&opt, 0, sizeof(struct uapi_snapshot));
 	opt.db = db->db_index;
-	opt.timestamp = timestamp;
+	opt.snapshot_id = snapshot_id;
 	ret = ioctl(db->dev_fd, RELEASE_SNAPSHOT, &opt);
 	if (ret < 0) {
 		p = strerror(errno);
-		printf("%s ioctl failed  time=%lld.\n", __FUNCTION__, timestamp);
+		printf("%s ioctl failed  time=%lld.\n", __FUNCTION__, snapshot_id);
 		set_err_and_return(err, p);
 	}
 	set_err_and_return(err, NULL);
@@ -1304,7 +1304,7 @@ int shannon_db_get_cf(struct shannon_db *db, const struct db_readoptions *r_opt,
 	kv.value = val_buf;
 	kv.value_buf_size = buf_size;
 	kv.db = db->db_index;
-	kv.timestamp = r_opt->snapshot;
+	kv.snapshot_id = r_opt->snapshot;
 	kv.cf_index = s_cf_hd->cf_index;
 	ret = ioctl(db->dev_fd, GET_KV, &kv);
 	if (ret < 0) {
@@ -1357,7 +1357,7 @@ int shannon_db_key_exist_cf(struct shannon_db *db, const struct db_readoptions *
 	status.key = (char *)key;
 	status.key_len = key_len;
 	status.db_index = db->db_index;
-	status.timestamp = r_opt->snapshot;
+	status.snapshot_id = r_opt->snapshot;
 	status.cf_index = cf_hd->cf_index;
 	ret = ioctl(db->dev_fd, IOCTL_KEY_STATUS, &status);
 	if (ret < 0) {

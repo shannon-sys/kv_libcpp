@@ -24,6 +24,7 @@ namespace shannon {
 class Snapshot {
 public:
   virtual SequenceNumber GetSequenceNumber() const = 0;
+  virtual void SetSequenceNumber(SequenceNumber seq) = 0;
   virtual ~Snapshot() { }
 };
 
