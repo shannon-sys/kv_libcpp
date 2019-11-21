@@ -1,5 +1,10 @@
 #ifndef __SHANNON_DB_H__
 #define __SHANNON_DB_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -267,5 +272,9 @@ extern void shannon_db_sstoptions_set_block_size(struct db_sstoptions *opt, unsi
 extern char *shannon_db_property_value(shannon_db_t *db, const char *propname);
 extern int shannon_db_property_int(shannon_db_t *db, const char *propname, __u64 *out_val);
 extern char *shannon_db_property_value_cf(shannon_db_t *db, shannon_cf_handle_t *column_family, const char *propname);
+
+#ifdef __cplusplus
+}
+#endif /* end of __cplusplus */
 
 #endif /* end of __SHANNON_DB_H__ */

@@ -1,5 +1,8 @@
 CC = gcc
+CXX = g++
 CFLAGS = -g
+CXXFLAGS=-std=c++11
+GTEST_LIB=-lgtest -lgtest_main -lpthread
 SHANNON_LIB = -lshannon_db
 SNAPPY_LIB = -lsnappy
 OBJS = shannon_db.o
@@ -70,6 +73,8 @@ build_sst_test: test/shannondb_build_sst_test.c $(OBJS)
 	 $(CC) $(CFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB)
 property_test: test/shannondb_property_test.c $(OBJS)
 	 $(CC) $(CFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB)
+extern_c_test: test/shannondb_extern_c_test.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB) $(GTEST_LIB)
 clean:
 	rm -rf a.out *.o *.so *.a *.pyc *_test $(SST_OBJS) $(TESTS)
 
