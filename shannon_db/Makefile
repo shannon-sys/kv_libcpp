@@ -75,6 +75,8 @@ property_test: test/shannondb_property_test.c $(OBJS)
 	 $(CC) $(CFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB)
 extern_c_test: test/shannondb_extern_c_test.cpp $(OBJS)
 	$(CXX) $(CXXFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB) $(GTEST_LIB)
+remove_db_test: test/shannondb_remove_db_test.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) -I./ $^ -o $@ $(SNAPPY_LIB) $(GTEST_LIB)
 clean:
 	rm -rf a.out *.o *.so *.a *.pyc *_test $(SST_OBJS) $(TESTS)
 
