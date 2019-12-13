@@ -195,7 +195,7 @@ namespace shannon {
   }
 
   Status KVImpl::Read(const ReadOptions& options, ReadBatch* my_batch,
-		      std::vector<std::string>* values) {
+		      std::vector<std::pair<shannon::Status, std::string> >* values) {
     Status s;
     unsigned int failed_cmd_count;
     if (my_batch == NULL || values == NULL) {
@@ -243,9 +243,9 @@ namespace shannon {
         } else {
           tvalue.assign(v, value_len_addrs);
         }
-        values->push_back(tvalue);
+        values->push_back(std::make_pair(shannon::Status::OK(), tvalue));
       } else {
-        values->push_back(std::string(""));
+        values->push_back(std::make_pair(shannon::Status::NotFound(), std::string("")));
       }
     }
     // reread
@@ -283,7 +283,7 @@ namespace shannon {
         if (return_status == READBATCH_SUCCESS) {
           std::string value;
           value.assign(v, value_len_addrs);
-          (*values)[reread_index[i]] = value;
+          (*values)[reread_index[i]].second = value;
         } else {
           // do nothing
         }

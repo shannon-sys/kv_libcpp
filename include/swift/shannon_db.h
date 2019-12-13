@@ -71,7 +71,7 @@ class DB {
 
   //
   virtual Status Read(const ReadOptions& options, ReadBatch* batch,
-		  std::vector<std::string> *values) = 0;
+		  std::vector<std::pair<shannon::Status, std::string> > *values) = 0;
   virtual Status WriteNonatomic(const WriteOptions& options,
                                 WriteBatchNonatomic* updates) = 0;
 
