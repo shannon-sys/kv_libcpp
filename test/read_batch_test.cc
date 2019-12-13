@@ -73,12 +73,13 @@ int main() {
     else
       batch.Put(cf2, key, value);
   }
+  batch.Put(cf1, "zero_value", "");
   Status s = db->Write(shannon::WriteOptions(), &batch);
   assert(s.ok());
   batch.Clear();
 
   shannon::ReadBatch read_batch;
-  std::vector<std::string> values;
+  std::vector<std::pair<shannon::Status, std::string> > values;
   for (int i = 0; i < 900; i ++) {
     sprintf(key, "key:%d", i);
     if (i % 2 == 0)
@@ -86,14 +87,20 @@ int main() {
     else
       read_batch.Get(cf2, key);
   }
+  read_batch.Get(cf2, "not_exists_key");
+  read_batch.Get(cf1, "zero_value");
+
   status = db->Read(shannon::ReadOptions(), &read_batch, &values);
   assert(status.ok());
-  for (int i = 0; i < values.size(); i ++) {
-    assert(values[i].size() > 0);
+  for (int i = 0; i < values.size() - 2; i ++) {
+    assert(values[i].first.ok());
     sprintf(value, "value:%d", i);
-    CheckCondition(values[i].size() == strlen(value));
-    CheckEqual(values[i].data(), value, values[i].size());
+    CheckCondition(values[i].second.size() == strlen(value));
+    CheckEqual(values[i].second.data(), value, values[i].second.size());
   }
+  assert(values[values.size() - 2].first.IsNotFound());
+  assert(values[values.size() - 1].first.ok());
+  CheckCondition(values[values.size() - 1].second.size() == 0);
   delete cf2;
   delete cf1;
   delete db;
