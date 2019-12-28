@@ -1,7 +1,7 @@
 #define CF_NAME_LEN                   32
 #define DB_NAME_LEN                   32
-#define MAX_DATABASE_COUNT            16
-#define MAX_CF_COUNT                  16
+#define MAX_DATABASE_COUNT            64
+#define MAX_CF_COUNT                  4
 #define MAX_CHECKPOINT_COUNT          16
 #define MAX_SNAPSHOT_COUNT            256
 #define MAX_KEY_SIZE                  128
