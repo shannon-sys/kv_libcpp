@@ -120,7 +120,7 @@ Status WriteBatch::Put(ColumnFamilyHandle* column_family, const Slice& key,
     size_t value_size = WriteBatchInternal::GetValueSize(this);
     size_t byte_size = WriteBatchInternal::ByteSize(this);
     int count = WriteBatchInternal::Count(this);
-    if (column_family == NULL || key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
+    if (column_family == NULL || key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() < 0)
         return Status::Corruption("format error: key , value or column family.");
     if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
         (count >= MAX_BATCH_COUNT)) {
@@ -151,7 +151,7 @@ Status WriteBatch::Put(const Slice& key, const Slice& value) {
   size_t value_size = WriteBatchInternal::GetValueSize(this);
   size_t byte_size = WriteBatchInternal::ByteSize(this);
   int count = WriteBatchInternal::Count(this);
-  if (key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
+  if (key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() < 0)
     return Status::Corruption("format error: key , value or column family.");
   if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_SIZE) ||
       (count >= MAX_BATCH_COUNT)) {
@@ -335,7 +335,7 @@ Status WriteBatchNonatomic::Put(ColumnFamilyHandle* column_family, const Slice& 
     size_t value_size = WriteBatchInternalNonatomic::GetValueSize(this);
     size_t byte_size = WriteBatchInternalNonatomic::ByteSize(this);
     int count = WriteBatchInternalNonatomic::Count(this);
-    if (column_family == NULL || key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
+    if (column_family == NULL || key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() < 0)
         return Status::Corruption("format error: key , value or column family.");
     if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_NONATOMIC_SIZE) ||
         (count >= MAX_BATCH_NONATOMIC_COUNT)) {
@@ -366,7 +366,7 @@ Status WriteBatchNonatomic::Put(const Slice& key, const Slice& value, __u64 time
   size_t value_size = WriteBatchInternalNonatomic::GetValueSize(this);
   size_t byte_size = WriteBatchInternalNonatomic::ByteSize(this);
   int count = WriteBatchInternalNonatomic::Count(this);
-  if (key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() <= 0)
+  if (key.data() == NULL || key.size() <= 0 || value.data() == NULL || value.size() < 0)
     return Status::Corruption("format error: key , value or column family.");
   if ((byte_size + value_size + sizeof(struct writebatch_cmd) + key.size() + value.size() > MAX_BATCH_NONATOMIC_SIZE) ||
       (count >= MAX_BATCH_NONATOMIC_COUNT)) {

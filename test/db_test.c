@@ -104,6 +104,26 @@ int main (int argc,char * argv[])
 	std::cout << value << std::endl;
 
 	batch.Clear();
+
+    status = db->Put(shannon::WriteOptions(), "key_zero", "");
+    assert(status.ok());
+    status = db->Get(shannon::ReadOptions(), "key_zero", &value);
+    assert(status.ok());
+    assert(value.size() == 0);
+    
+    batch.Clear();
+    batch.Put("batch_key", "batch_value");
+    batch.Put("batch_key_zero", "");
+    status = db->Write(shannon::WriteOptions(), &batch);
+    assert(status.ok());
+    status = db->Get(shannon::ReadOptions(), "batch_key", &value);
+    assert(status.ok());
+    assert(value.size() == 11 && memcmp(value.data(), "batch_value", 11) == 0);
+    status = db->Get(shannon::ReadOptions(), "batch_key_zero", &value);
+    assert(status.ok());
+    assert(value.size() == 0);
+
+
     //DestroyDB(dbpath, "testdb", options);
     delete iter;
 	delete db;
