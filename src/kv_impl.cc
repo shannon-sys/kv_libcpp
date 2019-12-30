@@ -195,7 +195,7 @@ namespace shannon {
   }
 
   Status KVImpl::Read(const ReadOptions& options, ReadBatch* my_batch,
-		      std::vector<std::string>* values) {
+		      std::vector<std::pair<shannon::Status, std::string>>* values) {
     Status s;
     unsigned int failed_cmd_count;
     if (my_batch == NULL || values == NULL) {
@@ -233,19 +233,21 @@ namespace shannon {
       memcpy(&return_status, cstr + sizeof(int) , sizeof(int));
       memcpy(&value_len_addrs, cstr + sizeof(int) * 2, sizeof(int));
       struct readbatch_cmd *cmd = reinterpret_cast<struct readbatch_cmd*>(const_cast<char*>(my_batch->rep_.data() + cmd_offset));
+      values->push_back(std::make_pair(shannon::Status::OK(), std::string("")));
       if (return_status == READBATCH_SUCCESS) {
-        std::string tvalue;
         if (value_len_addrs > cmd->value_buf_size) {
           struct readbatch_cmd *cmd = reinterpret_cast<struct readbatch_cmd*>(const_cast<char*>(my_batch->rep_.data() + cmd_offset));
           read_batch.Get(cmd->cf_index, shannon::Slice(cmd->key, cmd->key_len), value_len_addrs);
           reread_index.push_back(i);
-          tvalue = "";
         } else {
-          tvalue.assign(v, value_len_addrs);
+          (*values)[i].second.assign(v, value_len_addrs);
         }
-        values->push_back(tvalue);
-      } else {
-        values->push_back(std::string(""));
+      } else if (return_status == READBATCH_NO_KEY) {
+        (*values)[i].first = shannon::Status::NotFound();
+      } else if (return_status == READBATCH_DATA_ERR) {
+        (*values)[i].first = shannon::Status::Corruption("data error");
+      } else if (return_status == READBATCH_VAL_BUF_ERR) {
+        (*values)[i].first = shannon::Status::Corruption("value buffer error");
       }
     }
     // reread
@@ -281,11 +283,13 @@ namespace shannon {
         struct readbatch_cmd *cmd = reinterpret_cast<struct readbatch_cmd*>(const_cast<char*>(read_batch.rep_.data() + cmd_offset));
         assert(cmd->value_buf_size == value_len_addrs);
         if (return_status == READBATCH_SUCCESS) {
-          std::string value;
-          value.assign(v, value_len_addrs);
-          (*values)[reread_index[i]] = value;
-        } else {
-          // do nothing
+          (*values)[reread_index[i]].second.assign(v, value_len_addrs);
+        } else if (return_status == READBATCH_NO_KEY) {
+          (*values)[i].first = shannon::Status::NotFound();
+        } else if (return_status == READBATCH_DATA_ERR) {
+          (*values)[i].first = shannon::Status::Corruption("data error");
+        } else if (return_status == READBATCH_VAL_BUF_ERR) {
+          (*values)[i].first = shannon::Status::Corruption("value buffer error");
         }
       }
       read_batch.Clear();

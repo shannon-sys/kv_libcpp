@@ -65,7 +65,7 @@ int main() {
   cf2 = handles[1];
   char key[20], value[20];
   shannon::WriteBatch batch;
-  for (int i = 0; i < 900; i ++) {
+  for (int i = 0; i < 500; i ++) {
     sprintf(key, "key:%d", i);
     sprintf(value, "value:%d", i);
     if (i % 2 == 0)
@@ -77,22 +77,54 @@ int main() {
   assert(s.ok());
   batch.Clear();
 
+  char big_value[8192];
+  memset(big_value, 'x', sizeof(big_value));
+  for (int i = 0; i < 500; i ++) {
+    sprintf(key, "key2:%d", i);
+    sprintf(big_value, big_value+6000, "value:%d", i);
+    if (i % 2 == 0)
+      batch.Put(cf1, key, big_value);
+    else
+      batch.Put(cf2, key, big_value);
+  }
+  s = db->Write(shannon::WriteOptions(), &batch);
+  assert(s.ok());
+  batch.Clear();
+
+
   shannon::ReadBatch read_batch;
-  std::vector<std::string> values;
-  for (int i = 0; i < 900; i ++) {
+  std::vector<std::pair<shannon::Status, std::string>> values;
+  for (int i = 0; i < 500; i ++) {
     sprintf(key, "key:%d", i);
     if (i % 2 == 0)
       read_batch.Get(cf1, key);
     else
       read_batch.Get(cf2, key);
   }
+  
+  for (int i = 0; i < 500; i ++) {
+    sprintf(key, "key2:%d", i);
+    if (i % 2 == 0) 
+      read_batch.Get(cf1, key);
+    else
+      read_batch.Get(cf2, key);
+  }
   status = db->Read(shannon::ReadOptions(), &read_batch, &values);
   assert(status.ok());
-  for (int i = 0; i < values.size(); i ++) {
-    assert(values[i].size() > 0);
+  assert(values.size() == 1000);
+  for (int i = 0; i < 500; i ++) {
+    assert(values[i].first.ok());
+    assert(values[i].second.size() > 0);
     sprintf(value, "value:%d", i);
-    CheckCondition(values[i].size() == strlen(value));
-    CheckEqual(values[i].data(), value, values[i].size());
+    CheckCondition(values[i].second.size() == strlen(value));
+    CheckEqual(values[i].second.data(), value, values[i].second.size());
+  }
+  for(int i = 500; i < 1000; i ++) {
+    assert(values[i].first.ok());
+    assert(values[i].second.size() > 0);
+    sprintf(big_value + 6000, "value:%d", i - 500);
+    CheckCondition(values[i].second.size() == strlen(big_value));
+    CheckEqual(values[i].second.data(), big_value, values[i].second.size());
   }
   delete cf2;
   delete cf1;
