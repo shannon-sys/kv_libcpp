@@ -32,6 +32,7 @@ enum CompressionType : unsigned char {
 
 struct DBOptions {
   bool create_if_missing = false;
+  int db_index;
   bool create_missing_column_families = false;
   size_t keep_log_file_num = 1000;
   size_t max_manifest_file_size = 64 * 1024 * 1024;

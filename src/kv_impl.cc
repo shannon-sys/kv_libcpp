@@ -81,6 +81,10 @@ namespace shannon {
     }
     memset(&handle, 0, sizeof(handle));
     handle.flags = db_options.create_if_missing ? handle.flags | O_DB_CREATE : handle.flags;
+    handle.flags = db_options.db_index != 0 ? handle.flags | O_DB_FORCED_INDEX : handle.flags;
+    if (db_options.db_index != 0) {
+      handle.db_index = db_options.db_index;
+    }
     memcpy(handle.name, dbname_.data(), DB_NAME_LEN);
     ret = ioctl(fd_, OPEN_DATABASE, &handle);
     if (ret < 0) {
