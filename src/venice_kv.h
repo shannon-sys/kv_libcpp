@@ -186,6 +186,7 @@ struct uapi_dev_status {
 struct uapi_db_handle {
 /* if the database doesn't exist, create it */
 #define O_DB_CREATE       0x1
+#define O_DB_FORCED_INDEX  0x2
 	unsigned long flags;
 	int db_index;
 	int reserved;
