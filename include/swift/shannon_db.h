@@ -48,6 +48,7 @@ class DB {
             const std::string& name, const std::string& device,
             const std::vector<ColumnFamilyDescriptor>& column_families,
             std::vector<ColumnFamilyHandle*>* handles, DB** dbptr);
+
   DB() { }
   virtual ~DB();
 
@@ -249,6 +250,9 @@ class ColumnFamilyHandle {
 
 Status GetSequenceNumber(std::string& device, uint64_t *sequence);
 Status SetSequenceNumber(std::string& device, uint64_t sequence);
+Status ListDatabase(const std::string& device, DatabaseList* db_list);
+
+
 
 }  // namespace shannon
 
