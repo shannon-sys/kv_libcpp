@@ -191,6 +191,7 @@ struct uapi_db_handle {
 	int db_index;
 	int reserved;
 	char name[DB_NAME_LEN];
+	__u64 timestamp; /* return to list_database */
 };
 
 struct uapi_db_list {
