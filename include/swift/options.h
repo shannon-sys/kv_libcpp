@@ -125,6 +125,14 @@ struct CompactRangeOptions {
   bool change_level = false;
 };
 
+struct DatabaseInfo {
+  int index;
+  std::string name;
+  uint64_t timestamp;
+};
+
+typedef std::vector<DatabaseInfo> DatabaseList;
+
 };  // namespace shannon
 
 #endif  // SHANNON_DB_INCLUDE_OPTIONS_H_

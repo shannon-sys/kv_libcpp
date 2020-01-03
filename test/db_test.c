@@ -29,8 +29,15 @@ int main (int argc,char * argv[])
 	options.create_if_missing = true;
 	shannon::Status status = shannon::DB::Open (options, "testdb", dbpath, &db);
 	assert(status.ok());
-	uint64_t ts1 = 0, ts2 = 0;
 
+	shannon::DatabaseList database_list;
+	status = shannon::ListDatabase(dbpath, &database_list);
+	assert(status.ok());
+	for (int i = 0; i < database_list.size(); i ++) {
+		std::cout<<"db_name:"<<database_list[i].name<<" db_index:"<<database_list[i].index<<" timestamp:"<<database_list[i].timestamp<<std::endl;
+	}
+
+	uint64_t ts1 = 0, ts2 = 0;
 	status = shannon::GetSequenceNumber(dbpath, &ts1);
 	assert(status.ok());
 	std::cout << "timestamp1=" << ts1 << std::endl;

@@ -144,4 +144,34 @@ Status SetSequenceNumber(std::string& device, uint64_t sequence)
   return s;
 }
 
+Status ListDatabase(const std::string& device, DatabaseList* db_list) {
+  Status s;
+  int ret, fd;
+  struct uapi_db_list list;
+
+  if (db_list == NULL) {
+    return Status::InvalidArgument("db_list is null");
+  }
+  fd = open(device.data(), O_RDWR);
+  if (fd < 0) {
+    return Status::NotFound(strerror(errno));
+  }
+  memset(&list, 0, sizeof(list));
+  list.list_all = 0;
+  ret = ioctl(fd, LIST_DATABASE, &list);
+  if (ret) {
+    close(fd);
+    return Status::IOError(strerror(errno));
+  }
+
+  for (int i = 0; i < list.count; i ++) {
+    DatabaseInfo info;
+    info.index = list.dbs[i].db_index;
+    info.timestamp = list.dbs[i].timestamp;
+    info.name.assign(list.dbs[i].name, strlen(list.dbs[i].name));
+    db_list->push_back(info);
+  }
+  return Status::OK();
+}
+
 }
