@@ -139,6 +139,10 @@ void test_iter_expired(string &device)
   iter->Next();
   assert(!iter->Valid() && iter->status().IsCorruption());
   delete iter;
+
+  // test expired(invalid) timestamp, create log iterator should fail
+  s = NewLogIterator(device, 0, &iter);
+  assert(!s.ok());
 }
 
 int match_key(Slice &key, uint32_t num)
