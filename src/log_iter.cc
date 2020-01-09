@@ -205,6 +205,20 @@ Slice LogIteratorImpl::key() {
   return saved_key_;
 }
 
+bool assert_string(char *data, int len) {
+  int i = 0;
+  for (; i < len; i ++) {
+    if (data[i] != 0) {
+      break;
+    }
+  }
+  if (len > 0 && i == len) {
+    std::cout<<"kvlibc++: log_iter get value error! len:"<<len<<std::endl;
+    return true;
+  }
+  return false;
+}
+
 Slice LogIteratorImpl::value() {
   struct uapi_log_iter_get_option option;
   int ret = 0;
@@ -245,7 +259,15 @@ Slice LogIteratorImpl::value() {
   // set value, db, cf, optype, timestamp, read_flag
   status_ = Status::OK();
   read_flag_ &= LOG_READED_VALUE;
+  
   saved_value_.assign(option.value, option.value_len);
+  if (assert_string(option.value, option.value_len)) {
+    std::cout<<"error key:"<<saved_key_<<std::endl<<" format:";
+    for (int i = 0; i < saved_key_.size(); i ++) {
+      printf("%x ", (unsigned char)saved_key_.data()[i]);
+    }
+    std::cout<<std::endl;
+  }
   free(option.value);
   db_ = option.db_index;
   cf_ = option.cf_index;
