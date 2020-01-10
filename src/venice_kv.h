@@ -309,6 +309,7 @@ struct uapi_log_iter_get_option {
 #define LOG_DELETE_KEY       0x02
 #define LOG_CREATE_DB        0x03
 #define LOG_DELETE_DB        0x04
+#define LOG_INVALID          0xFF
 	unsigned char optype;
 	unsigned char reserved[3];
 	int key_buf_len;
@@ -379,6 +380,7 @@ struct uapi_raw_block {
 	int size;
 	char *buf;
 	__u64 *metadatas;
+	__u8 *eccs;
 };
 
 #endif /* end of __VENICE_KV__ */

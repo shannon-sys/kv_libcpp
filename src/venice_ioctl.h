@@ -12,8 +12,8 @@
 #include <linux/types.h>
 #include <linux/ioctl.h>
 #include <linux/version.h>
-#include "src/venice_macro.h"
-#include "src/venice_kv.h"
+#include "venice_macro.h"
+#include "venice_kv.h"
 
 enum {
 	GET_KV_CMD = 0x13,
@@ -62,6 +62,9 @@ enum {
 	LOG_ITER_MOVE_CMD,
 	LOG_ITER_GET_CMD,
 	SET_TIMESTAMP_CMD,
+	GET_PROPERTY_CMD,
+	RAW_READ_CMD,
+	SINGLE_RAW_READ_CMD,
 };
 
 
@@ -132,4 +135,9 @@ enum {
 #define IOCTL_MTABLE_ITER_SEEK       _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_ITER_SEEK_CMD, struct uapi_miter_seek_option)
 #define IOCTL_MTABLE_ITER_MOVE       _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_ITER_MOVE_CMD, struct uapi_miter_move_option)
 #define IOCTL_MTABLE_ITER_GET        _IOWR(VENICE_KV_IOCTL_FLAGS, MTABLE_ITER_GET_CMD, struct uapi_miter_get_option)
+
+#define IOCTL_GET_PROPERTY	_IOWR(VENICE_KV_IOCTL_FLAGS, GET_PROPERTY_CMD, struct uapi_get_property)
+#define IOCTL_RAW_READ	_IOWR(VENICE_KV_IOCTL_FLAGS, RAW_READ_CMD, struct uapi_raw_block)
+#define IOCTL_SINGLE_RAW_READ	_IOWR(VENICE_KV_IOCTL_FLAGS, SINGLE_RAW_READ_CMD, struct uapi_raw_block)
+
 #endif /* end of __VENICE_IOCTL__ */
