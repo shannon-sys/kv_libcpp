@@ -181,6 +181,11 @@ struct uapi_dev_status {
 	__u64 est_disk_usage;
 
 	__u32 dynamic_bad_blkcnt;
+
+	__u16 wear_level_norm;
+	__u16 wear_level_min;
+	__u16 wear_level_max;
+	__u16 wear_level_avg;
 };
 
 struct uapi_db_handle {
