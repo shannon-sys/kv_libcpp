@@ -171,6 +171,7 @@ Status ListDatabase(const std::string& device, DatabaseList* db_list) {
     info.name.assign(list.dbs[i].name, strlen(list.dbs[i].name));
     db_list->push_back(info);
   }
+  close(fd);
   return Status::OK();
 }
 
