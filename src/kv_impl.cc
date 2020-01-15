@@ -86,11 +86,18 @@ namespace shannon {
       handle.db_index = db_options.db_index;
     }
     memcpy(handle.name, dbname_.data(), DB_NAME_LEN);
-    ret = ioctl(fd_, OPEN_DATABASE, &handle);
-    if (ret < 0) {
-        std::cout<<"ioctl open database failed!"<<std::endl;
-        return Status::IOError(strerror(errno));
-    }
+    do {
+      ret = ioctl(fd_, OPEN_DATABASE, &handle);
+      if (ret < 0) {
+        // retry open
+        if (errno == EAGAIN) {
+          usleep(10000);
+        } else {
+          std::cout<<"ioctl open database failed!"<<std::endl;
+          return Status::IOError(strerror(errno));
+        }
+      }
+    } while (ret < 0);
     this->db_ = handle.db_index;
     /* get column_family name list */
     list.db_index = this->db_;
