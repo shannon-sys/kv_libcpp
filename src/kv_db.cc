@@ -79,12 +79,14 @@ Status DB::ListColumnFamilies(const DBOptions& db_options,
     memcpy(handle.name, name.data(), name.length());
     ret = ioctl(fd, OPEN_DATABASE, &handle);
     if (ret < 0) {
+        close(fd);
         std::cout<<"ioctl open database failed!"<<std::endl;
         return Status::IOError(strerror(errno));
     }
     list.db_index = handle.db_index;
     ret = ioctl(fd, LIST_COLUMNFAMILY, &list);
     if (ret < 0) {
+        close(fd);
         std::cout<<"ioctl list columnfamily failed!"<<std::endl;
         return Status::IOError(strerror(errno));
     }

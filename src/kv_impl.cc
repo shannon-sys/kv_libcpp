@@ -886,10 +886,12 @@ Status KVImpl::CompactRange(const CompactRangeOptions& options,
     memcpy(handle.name, dbname.data(), DB_NAME_LEN);
     ret = ioctl(fd, OPEN_DATABASE, &handle);
     if (ret < 0) {
+      close(fd);
       return Status::IOError(dbname.data(), strerror(errno));
     }
     ret = ioctl(fd, REMOVE_DATABASE, &handle);
     if (ret < 0) {
+       close(fd);
        return Status::IOError(dbname.data(), strerror(errno));
     }
     close(fd);
