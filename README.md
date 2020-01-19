@@ -95,3 +95,75 @@ sudo make install
 ## 3. 总结
 
 该代码库的使用方法，参见doc目录下的文档，或参考test目录下的实例。
+
+#迁移工具使用说明
+
+##支持的格式
+1. zlib
+2. zstd
+3. lz4
+4.  lz4hcc
+5.  bzip2
+6.  snappy
+##编译
+会需要提前安装对应的库文件
+可选择命令，具体看操作系统
+
+```
+ yum -y install gcc gcc-c++
+ yum -y install snappy snappy-devel zlib zlib-devel bzip2 bzip2-devel lz4 lz4-devel zstd
+```
+可以选择单独编译某种压缩格式，如果你不清楚使用哪种压缩格式也可以选择全部打开，也可以同时使用两种或者多种压缩格式。
+```
+ALL_COMPRES=ture   				打开所有的压缩格式
+ZLIB=ture						使用zlib
+ZSTD=ture						使用zstd
+BZIP2=ture						使用bzlib2
+LZ4=ture						使用lz4和lz4hcc
+```
+在kv_libc++下编译，使用 make 来编译，编译的同时加上对应的参数
+**比如**
+```
+make ZLIB=true LZ4=true
+```
+然后在kv_libc++下编译migrate工具
+```
+// 使用和上面编译kv_libc++时相同的参数，否则可能运行不正常，和上面一致
+make migrate ZLIB=true LZ4=true
+```
+这样就可以使用
+
+此工具会要求输入要导入的db的名字（可以和导入之前不同），ColumnFamily的名字（必须和导入的源的数量名字完全一致，如果只需要默认创建输入default即可），需要导入的sst文件的地址。
+
+```
+please cin dbname
+db
+please cin ColumnFamily name split with a blank, exit with "default"(mean use default db cf)
+default
+please cin sst file split with a blank
+./test/a.sst
+```
+
+之后就会自动导入sst文件到卡上
+###注意
+1. 该导入操作之前需要安装驱动
+2. 在导入的时候会删除之前的同名db然后重新创建
+3. 一次只能导入一个db，如果有多个db请多次导入
+4. 如果sst文件较多，可以使用shell实现导入操作
+
+实例
+```
+    echo -e $filename"\ndefault" > $filename".config"
+    file_path=$path$filename
+    cd $file_path
+    ssts=$(ls *.sst)
+    fil=""
+    for sst in $ssts
+    do
+        str=$file_path"/"$sst
+        fil+=" "$str
+    done
+    echo -e $fil >> "../../"$filename".config"
+    cd ../../
+    ./migrate < $filename".config"
+```
