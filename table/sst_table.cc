@@ -6,6 +6,7 @@
 #include "sst_table.h"
 #include "block_builder.h"
 #include "dbformat.h"
+#include "compression.h"
 #include "swift/env.h"
 #include "swift/options.h"
 #include "swift/slice.h"
@@ -140,6 +141,12 @@ static Status UncompressBlock(Slice *result, Slice *input) {
   size_t n = input->size() - kBlockTrailerSize, ulength = 0;
   Status s;
 
+  if(!CompressionTypeSupported(data[n])) {
+    DEBUG("unknown block compress type, type=%d\n", (int)data[n]);
+    return Status::NotSupported("unknow block compress type");
+  };
+  Slice realdata(data, n);
+
   switch (data[n]) {
   case kNoCompression:
     *result = Slice(data, n);
@@ -157,6 +164,32 @@ static Status UncompressBlock(Slice *result, Slice *input) {
       return Status::Corruption("uncompressed block fail");
     }
     *result = Slice(ubuf, ulength);
+    break;
+  case kZlibCompression:
+    if (!zlib_uncompress(result, &realdata)) {
+      return Status::Corruption("Zlib uncompressed block fail");
+    }
+    break;
+  case kBZip2Compression:
+    if (!bzip2_uncompress(result, &realdata)) {
+      return Status::Corruption("BZip2 uncompressed block fail");
+    }
+    break;
+  case kLZ4Compression:
+    if (!lz4_uncompress(result, &realdata)) {
+      return Status::Corruption("LZ4 uncompressed block fail");
+    }
+    break;
+  case kLZ4HCCompression:
+    if (!lz4hcc_uncompress(result, &realdata)) {
+      return Status::Corruption("LZ4HCC uncompressed block fail");
+    }
+    break;
+  case kZSTD:
+  case kZSTDNotFinalCompression:
+    if (!zstd_uncompress(result, &realdata)) {
+      return Status::Corruption("ZSTD uncompressed block fail");
+    }
     break;
   default:
     DEBUG("unknown block compress type, type=%d\n", (int)data[n]);

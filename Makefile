@@ -6,6 +6,30 @@ CPP_LIB = $(CPP_LIB_PATH)/libshannondb_cxx.a
 
 LIB = libshannondb.so
 
+COMPRESS_FLAG =
+COMPRESS_LIB =
+
+ifdef ALL_COMPRESS
+	COMPRESS_FLAG = -DALL_COMPRESS
+	COMPRESS_LIB =  -llz4 -lzstd -lbz2 -lz
+else
+ifdef ZLIB
+	COMPRESS_FLAG += -DZLIB
+	COMPRESS_LIB += -lz
+endif
+ifdef ZSTD
+	COMPRESS_FLAG += -DZSTD
+	COMPRESS_LIB += -lzstd
+endif
+ifdef BZIP2
+	COMPRESS_FLAG += -DBZIP2
+	COMPRESS_LIB += -lbz2
+endif
+ifdef LZ4
+	COMPRESS_FLAG += -DLZ4
+	COMPRESS_LIB += -llz4
+endif
+endif
 .PHONY: $(C_LIB) $(CPP_LIB) install clean
 
 all: $(LIB)
@@ -43,6 +67,7 @@ LibNameStatic=lib${Target}.a
 SNAPPY_LIB=-lsnappy
 HEAD=./include
 CXXFLAGS = -std=c++11
+CXXFLAGS += ${COMPRESS_FLAG}
 
 OBJS = src/kv_db.o src/kv_impl.o src/status.o src/write_batch.o src/iter.o src/log_iter.o \
 	src/column_family.o util/coding.o util/comparator.o util/bloom.o util/hash.o util/bloom.o util/filter_policy.o \
@@ -58,7 +83,7 @@ TESTS = db_test analyze_sst_test build_sst_test log_iter_test log_iter_thread_te
 cpp: ${LibName}
 
 ${LibName}: $(OBJS)
-	g++ $(CXXFLAGS) -g -fPIC --shared $^ -o $@ $(SNAPPY_LIB)
+	g++ $(CXXFLAGS) -g -fPIC --shared $^ -o $@ $(SNAPPY_LIB) $(COMPRESS_LIB)
 	ar -rcs ${LibNameStatic} $^
 
 cpp_test: $(TESTS)
