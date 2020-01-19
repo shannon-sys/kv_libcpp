@@ -219,6 +219,44 @@ inline bool bzip2_uncompress(Slice *result, Slice *input) {
 inline bool lz4_uncompress(Slice *result, Slice *input) {
   DEBUG("lz4_uncompress\n");
 #ifdef LZ4
+  int compress_format_version = 2;
+  const char* input_data = input->data();
+  size_t input_length = input->size();
+  uint32_t output_len;
+  const Slice& compression_dict = Slice();
+  if (!GetDecompressedSizeInfo(&input_data, &input_length, &output_len)) {
+    compress_format_version = 1;
+    if (input_length < 8) {
+      DEBUG("input_length smaller than 8 \n");
+      return false;
+    }
+    memcpy(&output_len, input_data, sizeof(output_len));
+    input_length -= 8;
+    input_data += 8;
+  } else {
+    compress_format_version = 2;
+  }
+  DEBUG("compress_format_version: %d\n", compress_format_version);
+
+  char* output = (char*) malloc(output_len);
+  int size = -1;
+  LZ4_streamDecode_t* stream = LZ4_createStreamDecode();
+  if (compression_dict.size()) {
+    LZ4_setStreamDecode(stream, compression_dict.data(),
+                        static_cast<int>(compression_dict.size()));
+  }
+  size = LZ4_decompress_safe_continue(
+      stream, input_data, output, static_cast<int>(input_length),
+      static_cast<int>(output_len));
+  LZ4_freeStreamDecode(stream);
+  DEBUG("size: %d output_len : %d input size : %d\n", size, output_len, input->size());
+  if (size < 0) {
+    free(output);
+    DEBUG("size %d\n", size);
+    return false;
+  }
+  assert(size == static_cast<int>(output_len));
+  *result = Slice(output, size);
   return true;
 #else
   return false;
