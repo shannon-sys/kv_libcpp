@@ -210,6 +210,69 @@ inline bool zlib_uncompress(Slice* result, Slice* input) {
 inline bool bzip2_uncompress(Slice *result, Slice *input) {
   DEBUG("bzlib2_uncompress\n");
 #ifdef BZIP2
+  DEBUG("bzlib2_uncompress\n");
+  int compress_format_version = 2;
+  const char* input_data = input->data();
+  size_t input_length = input->size();
+  uint32_t output_len;
+  int windowBits = -14;
+  const Slice& compression_dict = Slice();
+  if (!GetDecompressedSizeInfo(&input_data, &input_length, &output_len)) {
+    compress_format_version = 1;
+    size_t proposed_output_len = ((input_length * 5) & (~(4096 - 1))) + 4096;
+    output_len = static_cast<uint32_t>(std::min(proposed_output_len,
+                 static_cast<size_t>(std::numeric_limits<uint32_t>::max())));
+  } else {
+    compress_format_version = 2;
+  }
+  DEBUG("compress_format_version: %d\n", compress_format_version);
+  bz_stream _stream;
+  memset(&_stream, 0, sizeof(z_stream));
+
+ int st = BZ2_bzDecompressInit(&_stream, 0, 0);
+  if (st != BZ_OK) {
+    return false;
+  }
+
+  _stream.next_in = (char*) input_data;
+  _stream.avail_in = static_cast<unsigned int> (input_length);
+
+  char* output = (char*) malloc(output_len);
+
+  _stream.next_out = (char*) output;
+  _stream.avail_out = static_cast<unsigned int> (output_len);
+
+  bool done = false;
+  while (!done) {
+    st = BZ2_bzDecompress(&_stream);
+    switch (st) {
+      case BZ_STREAM_END:
+        done = true;
+        break;
+      case BZ_OK: {
+        assert(compress_format_version != 2);
+        uint32_t old_sz = output_len;
+        output_len = output_len * 1.2;
+        char* tmp = new char[output_len];
+        memcpy(tmp, output, old_sz);
+        free(output);
+        output = tmp;
+        _stream.next_out = (char *) (output + old_sz);
+        _stream.avail_out = static_cast<unsigned int>(output_len - old_sz);
+        break;
+      }
+      default:
+        free(output);
+        BZ2_bzDecompressEnd(&_stream);
+        return false;
+    }
+  }
+
+  DEBUG("compress_format_version:%d, done:%d\n", compress_format_version, done);
+  assert(compress_format_version != 2 || _stream.avail_out == 0);
+  int size = static_cast<int>(output_len - _stream.avail_out);
+  BZ2_bzDecompressEnd(&_stream);
+  *result = Slice(output, size);
   return true;
 #else
   return false;
