@@ -124,12 +124,85 @@ inline bool CompressionTypeSupported(char compression_type) {
 }
 
 inline bool zlib_uncompress(Slice* result, Slice* input) {
-  DEBUG("zlib_uncompress\n");
 #ifdef ZLIB
   DEBUG("zlib_uncompress\n");
+  int compress_format_version = 2;
+  const char* input_data = input->data();
+  size_t input_length = input->size();
+  uint32_t output_len;
+  int windowBits = -14;
+  const Slice& compression_dict = Slice();
+  if (!GetDecompressedSizeInfo(&input_data, &input_length, &output_len)) {
+    compress_format_version = 1;
+    size_t proposed_output_len = ((input_length * 5) & (~(4096 - 1))) + 4096;
+    output_len = static_cast<uint32_t>(std::min(proposed_output_len,
+                 static_cast<size_t>(std::numeric_limits<uint32_t>::max())));
+  } else {
+    compress_format_version = 2;
+  }
+  DEBUG("compress_format_version: %d\n", compress_format_version);
+  z_stream _stream;
+  memset(&_stream, 0, sizeof(z_stream));
+  int st = inflateInit2(&_stream, windowBits > 0 ? windowBits + 32 : windowBits);
+  DEBUG("compression_dict size :%d, input size : %d\n", compression_dict.size(), input_length);
+  if (st != Z_OK) {
+    return false;
+  }
+
+  if (compression_dict.size()) {
+    // Initialize the compression library's dictionary
+    st = inflateSetDictionary(
+        &_stream, reinterpret_cast<const Bytef*>(compression_dict.data()),
+        static_cast<unsigned int>(compression_dict.size()));
+    if (st != Z_OK) {
+      DEBUG("something error\n");
+      return false;
+    }
+  }
+  _stream.next_in = (Bytef *)input_data;
+  _stream.avail_in = static_cast<unsigned int>(input_length);
+
+  char* output = (char*)malloc(output_len);
+
+  _stream.next_out = (Bytef *)output;
+  _stream.avail_out = static_cast<unsigned int>(output_len);
+
+  bool done = false;
+  while (!done) {
+    st = inflate(&_stream, Z_SYNC_FLUSH);
+    DEBUG("st: %d output_len : %d\n", st, output_len);
+    switch (st) {
+      case Z_STREAM_END:
+        done = true;
+        break;
+      case Z_OK: {
+        assert(compress_format_version != 2);
+        size_t old_sz = output_len;
+        uint32_t output_len_delta = output_len / 5;
+        output_len += output_len_delta < 10 ? 10 : output_len_delta;
+        char* tmp = (char*) malloc(output_len);
+        memcpy(tmp, output, old_sz);
+        free(output);
+        output = tmp;
+        _stream.next_out = (Bytef *)(output + old_sz);
+        _stream.avail_out = static_cast<unsigned int>(output_len - old_sz);
+        break;
+      }
+      case Z_BUF_ERROR:
+      default:
+        free(output);
+        inflateEnd(&_stream);
+        DEBUG("something error\n");
+        return false;
+    }
+  }
+  DEBUG("compress_format_version:%d, done:%d\n", compress_format_version, done);
+  assert(compress_format_version != 2 || _stream.avail_out == 0);
+  int size = static_cast<int> (output_len - _stream.avail_out);
+  inflateEnd(&_stream);
+  *result = Slice(output, size);
   return true;
 #else
-  DEBUG("zlib_uncompress\n");
   return false;
 #endif
 }
