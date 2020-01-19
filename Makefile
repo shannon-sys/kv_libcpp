@@ -107,6 +107,8 @@ read_batch_test: test/read_batch_test.cc $(OBJS)
 kvlib_test: test/kvlib_test.cc $(OBJS)
 	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB) -lpthread -lgtest
 
+migrate: table/migrate.cc $(OBJS)
+	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB) $(COMPRESS_LIB)
 cpp_uninstall:
 	rm -rf /usr/include/swift
 	rm /usr/lib/${LibName}
