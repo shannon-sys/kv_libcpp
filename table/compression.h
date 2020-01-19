@@ -328,7 +328,11 @@ inline bool lz4_uncompress(Slice *result, Slice *input) {
 
 inline bool lz4hcc_uncompress(Slice *result, Slice *input) {
   DEBUG("lz4hcc_uncompress\n");
+#ifdef LZ4
+  return lz4_uncompress(result, input);
+#else
   return false;
+#endif
 }
 
 inline bool zstd_uncompress(Slice *result, Slice *input) {
