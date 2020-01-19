@@ -269,8 +269,34 @@ inline bool lz4hcc_uncompress(Slice *result, Slice *input) {
 }
 
 inline bool zstd_uncompress(Slice *result, Slice *input) {
+#ifdef ZSTD
   DEBUG("zstd_uncompress\n");
+  const char* input_data = input->data();
+  size_t input_length = input->size();
+  uint32_t output_len;
+  const Slice& compression_dict = Slice();
+  if (!GetDecompressedSizeInfo(&input_data, &input_length, &output_len)) {
+    return false;
+  }
+  DEBUG("inputsize: %d input_size: %d\n", input_length, input->size());
+  char* output = (char*) malloc(output_len);
+  int size = -1;
+
+  size_t actual_output_length;
+  ZSTD_DCtx* context = ZSTD_createDCtx();
+  actual_output_length = ZSTD_decompress_usingDict(
+      context, output, output_len, input_data, input_length,
+      compression_dict.data(), compression_dict.size());
+  ZSTD_freeDCtx(context);
+  DEBUG("actual_output_length :%d output_len :%d \n", actual_output_length, output_len);
+  assert(actual_output_length == output_len);
+  size = static_cast<int>(actual_output_length);
+  assert(size >= 0);
+  *result = Slice(output, size);
+  return true;
+#else
   return false;
+#endif
 }
 
 } //namespace shannon
