@@ -220,6 +220,134 @@ void check_iter(LogIterator *iter, LogOpType type, int db_idx, uint64_t start_ts
   }
 }
 
+struct record {
+  string db_name;
+#define TYPE_CREATE 0
+#define TYPE_REMOVE 1
+  int type;
+};
+
+LogIterator *create_log_iterator(string device, uint64_t &timestamp)
+{
+  LogIterator *iter = NULL;
+  Status s;
+
+  s = shannon::GetSequenceNumber(device, &timestamp);
+  assert(s.ok());
+  DEBUG("get dev timestamp=%lu\n", timestamp);
+  s = NewLogIterator(device, timestamp, &iter);
+  assert(s.ok());
+
+  // the last kv, can not find new kv;
+  iter->Next();
+  assert(!iter->Valid() && iter->status().IsNotFound());
+
+  return iter;
+}
+
+void destroy_log_iterator(LogIterator *iter)
+{
+  delete iter;
+}
+
+/**
+ * @brief Create a db only if it doesn't exist.
+ *
+ * @param device
+ * @param db_name
+ * @return bool
+ */
+bool create_new_db(string device, string db_name)
+{
+  DB *db;
+  Options option;
+  option.create_if_missing = false;
+  Status s;
+
+  s = DB::Open(option, db_name, device, &db);
+  if (s.ok()) {
+    // already exists
+    delete db;
+    return false;
+  }
+
+  option.create_if_missing = true;
+  s = DB::Open(option, db_name, device, &db);
+  delete db;
+  return s.ok();
+}
+
+bool remove_exist_db(string device, string db_name)
+{
+  Status s;
+  s = DestroyDB(device, db_name, Options());
+  return s.ok();
+}
+
+void test_create_remove_db(string device)
+{
+  vector<record> history;  // only record suss
+  uint64_t timestamp;
+  LogIterator *iter = NULL;
+  Status s;
+  const int DB_COUNT = 20;
+  int succ;
+
+  srand (time(NULL));
+
+  iter = create_log_iterator(device, timestamp);
+
+  for (int i = 0; i < 100; i++) {
+    struct record rec;
+    int idx = rand() % DB_COUNT;
+    char buf[512];
+
+    snprintf(buf, sizeof(buf), "log%d", idx);
+    string db_name = buf;
+    int type = rand() % 2;
+
+    if (type == TYPE_CREATE) {
+      succ = create_new_db(device, db_name);
+    } else {
+      succ = remove_exist_db(device, db_name);
+    }
+
+    if (succ) {
+      rec.db_name = db_name;
+      rec.type = type;
+      history.push_back(rec);
+    }
+  }
+
+  for (int i = 0; i < history.size(); i++) {
+    struct record rec = history[i];
+    ++timestamp;
+    iter->Next();
+    assert(iter->Valid());
+    assert(iter->timestamp() == timestamp);
+
+    if (rec.type == TYPE_CREATE)
+      assert(iter->optype() == DB_CREATE);
+    else
+      assert(iter->optype() == DB_DELETE);
+
+    {
+      auto value = iter->value();
+      assert(iter->status().ok());
+      assert(rec.db_name == value.ToString());
+    }
+  }
+
+  for (int i = 0; i < DB_COUNT; i++) {
+    char buf[512];
+    snprintf(buf, sizeof(buf), "log%d", i);
+    string db_name = buf;
+    remove_exist_db(device, db_name);
+  }
+
+  destroy_log_iterator(iter);
+}
+
 int test_iter_data(string &device)
 {
   uint64_t timestamp;
@@ -270,6 +398,8 @@ int main(int argc,char * argv[])
 
   printf("===== start log iter test\n");
   {
+    printf("===== start create_remove_db test\n");
+    test_create_remove_db(device);
     printf("===== start test_iter_data\n");
     test_iter_data(device);
     printf("===== start test expired log iter\n");
