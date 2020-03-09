@@ -410,6 +410,7 @@ namespace shannon {
         cerr << "malloc mem fail!" <<endl;
         return Status::IOError("malloc mem fail!\n");
     }
+    memset(&kv, 0, sizeof(kv));
     kv.db = db_;
     kv.cf_index = (reinterpret_cast<const ColumnFamilyHandle* >(column_family))->GetID();
     kv.key = (char *)key.data();
