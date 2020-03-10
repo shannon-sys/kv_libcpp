@@ -73,10 +73,10 @@ OBJS = src/kv_db.o src/kv_impl.o src/status.o src/write_batch.o src/iter.o src/l
 	src/column_family.o util/coding.o util/comparator.o util/bloom.o util/hash.o util/bloom.o util/filter_policy.o \
 	util/crc32c.o util/xxhash.o util/fileoperate.o util/filename.o table/dbformat.o table/filter_block.o src/write_batch_with_index.o \
 	cache/lru_cache.o cache/sharded_cache.o table/block_builder.o env/env.o table/format.o table/meta_block.o \
-	table/sst_table.o table/table_builder.o env/env_posix.o util/random.o util/arena.o src/read_batch.o
+	table/sst_table.o table/table_builder.o env/env_posix.o util/random.o util/arena.o src/read_batch.o src/req_id_que.o
 
 TESTS = db_test analyze_sst_test build_sst_test log_iter_test log_iter_thread_test \
-		skiplist_test write_batch_test read_batch_test kvlib_test
+		skiplist_test write_batch_test read_batch_test kvlib_test aio_test
 
 .PHONY: clean test install uninstall
 
@@ -103,6 +103,8 @@ skiplist_test: test/skiplist_test.cc $(OBJS)
 write_batch_test: test/write_batch_test.cc $(OBJS)
 	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB) -lpthread
 read_batch_test: test/read_batch_test.cc $(OBJS)
+	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB) -lpthread
+aio_test: test/test_aio.cc $(OBJS)
 	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB) -lpthread
 kvlib_test: test/kvlib_test.cc $(OBJS)
 	g++ $(CXXFLAGS) -I${HEAD} -g $^ -o $@ $(SNAPPY_LIB) -lpthread -lgtest
