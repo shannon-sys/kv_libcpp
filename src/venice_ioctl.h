@@ -65,6 +65,9 @@ enum {
 	GET_PROPERTY_CMD,
 	RAW_READ_CMD,
 	SINGLE_RAW_READ_CMD,
+	CREATE_AIOCTX_CMD,
+	DEL_AIOCTX_CMD,
+	GET_IOEVENTS_CMD,
 };
 
 
@@ -139,5 +142,10 @@ enum {
 #define IOCTL_GET_PROPERTY	_IOWR(VENICE_KV_IOCTL_FLAGS, GET_PROPERTY_CMD, struct uapi_get_property)
 #define IOCTL_RAW_READ	_IOWR(VENICE_KV_IOCTL_FLAGS, RAW_READ_CMD, struct uapi_raw_block)
 #define IOCTL_SINGLE_RAW_READ	_IOWR(VENICE_KV_IOCTL_FLAGS, SINGLE_RAW_READ_CMD, struct uapi_raw_block)
+
+/* aio */
+#define IOCTL_CREATE_AIOCTX           _IOWR(VENICE_KV_IOCTL_FLAGS, CREATE_AIOCTX_CMD, struct uapi_aioctx)
+#define IOCTL_DEL_AIOCTX              _IOWR(VENICE_KV_IOCTL_FLAGS, DEL_AIOCTX_CMD, struct uapi_aioctx)
+#define IOCTL_GET_IOEVENTS            _IOWR(VENICE_KV_IOCTL_FLAGS, GET_IOEVENTS_CMD, struct uapi_aioevents)
 
 #endif /* end of __VENICE_IOCTL__ */

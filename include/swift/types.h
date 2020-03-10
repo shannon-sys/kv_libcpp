@@ -5,14 +5,17 @@
 
 #ifndef STORAGE_SHANNONDB_INCLUDE_TYPES_H_
 #define STORAGE_SHANNONDB_INCLUDE_TYPES_H_
-
-#include <stdint.h>
 #include "swift/slice.h"
 
 namespace shannon {
 
 typedef uint64_t SequenceNumber;
 
+class CallBackPtr {
+ public:
+  virtual ~CallBackPtr() {}
+  virtual void call_ptr(const shannon::Status &s) = 0;
+};
 }  //  namespace shannon
 
 #endif //  STORAGE_SHANNONDB_INCLUDE_TYPES_H_

@@ -6,10 +6,14 @@
 #define KV_IMPL_INCLUDE_H
 #include <deque>
 #include <set>
+#include <mutex>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
 #include "swift/shannon_db.h"
 #include "src/venice_kv.h"
 #include "src/snapshot.h"
 #include "src/column_family.h"
+#include "src/req_id_que.h"
 
 namespace shannon {
 class KVImpl : public DB {
@@ -64,6 +68,25 @@ class KVImpl : public DB {
                    std::vector<Iterator*>* iterators) override;
   virtual ColumnFamilyHandle* DefaultColumnFamily() const override;
 
+  virtual Status GetAsync(const ReadOptions& options, const Slice& key,
+                          char* val_buf, const int32_t buf_len,
+                          int32_t* val_len, CallBackPtr* cb);
+  virtual Status GetAsync(const ReadOptions& options,
+                          ColumnFamilyHandle* column_family, const Slice& key,
+                          char* val_buf, const int32_t buf_len,
+                          int32_t* val_len, CallBackPtr* cb);
+  virtual Status PutAsync(const WriteOptions&, const Slice& key,
+                          const Slice& value, CallBackPtr* cb);
+  virtual Status PutAsync(const WriteOptions& options,
+                          ColumnFamilyHandle* column_family, const Slice& key,
+                          const Slice& value, CallBackPtr* cb);
+  virtual Status DeleteAsync(const WriteOptions&, const Slice& key,
+                             CallBackPtr* cb);
+  virtual Status DeleteAsync(const WriteOptions& options,
+                             ColumnFamilyHandle* column_family,
+                             const Slice& key, CallBackPtr* cb);
+  virtual Status PollCompletion(int32_t* num_events, const uint64_t timeout_us);
+
   virtual Status status() const {
       return status_;
   }
@@ -88,6 +111,7 @@ class KVImpl : public DB {
   void SetCfOptoions(const Options & options){
             cf_options_ = options;
   }
+  virtual void SetReqSize(const int32_t& size);
  protected:
   Env* const env_;
  private:
@@ -111,6 +135,19 @@ class KVImpl : public DB {
   void Close();
   KVImpl(const KVImpl&);
   void operator=(const KVImpl&);
+
+  // aio support
+  Status open_aio();
+  Status close_aio();
+  int req_size_;
+  std::vector<CallBackPtr*> cb_mp_;
+  std::vector<venice_kv> cmds_;
+  std::vector<int*> val_lens_;
+  ReqIdQue req_id_que_;
+  int EpollFD_dev = -1;
+  struct epoll_event watch_events_;
+  struct epoll_event list_of_events_[1];
+  struct uapi_aioctx aioctx_;
 };
 
 }

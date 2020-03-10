@@ -30,6 +30,7 @@ using namespace std;
 namespace shannon {
   const std::string kDefaultColumnFamilyName("default");
   KVImpl::~KVImpl() {
+    close_aio();
   }
   KVImpl::KVImpl(const DBOptions& options, const std::string& dbname, const std::string& device)
       :env_(options.env),
@@ -38,6 +39,7 @@ namespace shannon {
        device_(device) {
        default_cf_handle_ = NULL;
        is_default_open_ = false;
+       req_size_ = 8192;
     }
 
   Status KVImpl::Open() {
@@ -162,6 +164,10 @@ namespace shannon {
     for (int i = 0; i < (*handles).size(); ++i) {
         (*handles)[i]->SetDescriptor(column_families[i]);
     }
+    s = open_aio();
+    if (!s.ok()) {
+      return Status::InvalidArgument("open_aio error !\n");
+    }
     return s;
   }
 
@@ -196,7 +202,7 @@ namespace shannon {
     kv.cf_index = ((const ColumnFamilyHandle* )column_family)->GetID();
     kv.sync = options.sync ? 1 : 0;
     kv.fill_cache = options.fill_cache ? 1 : 0;
-
+    kv.aio = 0;
     ret = ioctl(fd_, DEL_KV, &kv);
     if (ret < 0) {
         std::cout<<"ioctl del kv failed!"<<std::endl;
@@ -388,6 +394,7 @@ namespace shannon {
     kv.value_len = value.size();
     kv.sync = options.sync ? 1 : 0;
     kv.fill_cache = options.fill_cache ? 1 : 0;
+    kv.aio = 0;
     int ret = ioctl(fd_, PUT_KV, &kv);
     if (ret < 0) {
         return Status::IOError(key.data());
@@ -420,6 +427,7 @@ namespace shannon {
     kv.fill_cache = options.fill_cache ? 1 : 0;
     kv.snapshot_id = options.snapshot != NULL
         ? options.snapshot->GetSequenceNumber() : 0;
+    kv.aio = 0;
     int ret = ioctl(fd_, GET_KV, &kv);
     if (ret < 0) {
         free(buf);
@@ -751,6 +759,242 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
   ColumnFamilyHandle* KVImpl::DefaultColumnFamily() const {
 
     return default_cf_handle_;
+  }
+
+  Status KVImpl::GetAsync(const ReadOptions& options, const Slice& key,
+                          char* val_buf, const int32_t buf_len,
+                          int32_t* val_len, CallBackPtr* cb) {
+    return this->GetAsync(options, default_cf_handle_, key, val_buf, buf_len,
+                          val_len, cb);
+  }
+
+  Status KVImpl::GetAsync(const ReadOptions& options,
+                          ColumnFamilyHandle* column_family, const Slice& key,
+                          char* val_buf, const int32_t buf_len,
+                          int32_t* val_len, CallBackPtr* cb) {
+    if (column_family == NULL || val_buf == NULL || cb == NULL) {
+      cerr << "null mem fail!" << endl;
+      return Status::InvalidArgument("null mem fail!\n");
+    }
+    Status s;
+    int32_t requestid = req_id_que_.borrow_id();
+    if (requestid < 0) {
+      return Status::InvalidArgument("has been close !");
+    }
+    val_lens_[requestid] = val_len;
+    cb_mp_[requestid] = cb;
+    struct venice_kv* kv = &cmds_[requestid];
+    kv->reqid = requestid;
+    kv->ctxid = aioctx_.ctxid;
+    kv->db = db_;
+    kv->cf_index = column_family->GetID();
+    kv->key = (char*)key.data();
+    kv->key_len = key.size();
+    kv->value = val_buf;
+    kv->value_buf_size = buf_len;
+    kv->fill_cache = options.fill_cache ? 1 : 0;
+    kv->aio = 1;
+    kv->snapshot_id =
+        options.snapshot != NULL ? options.snapshot->GetSequenceNumber() : 0;
+    int ret = ioctl(fd_, GET_KV, kv);
+    if (ret < 0) {
+      req_id_que_.give_back_id(requestid);
+      if (ENXIO == errno) return Status::NotFound(key.data());
+      return Status::IOError(key.data());
+    }
+    return Status::OK();
+  }
+
+  Status KVImpl::PutAsync(const WriteOptions& options, const Slice& key,
+                          const Slice& value, CallBackPtr* cb) {
+    return this->PutAsync(options, default_cf_handle_, key, value, cb);
+  }
+
+  Status KVImpl::PutAsync(const WriteOptions& options,
+                          ColumnFamilyHandle* column_family, const Slice& key,
+                          const Slice& value, CallBackPtr* cb) {
+    if (column_family == NULL || cb == NULL) {
+      return Status::InvalidArgument(strerror(errno));
+    }
+    int32_t requestid = req_id_que_.borrow_id();
+    if (requestid < 0) {
+      return Status::InvalidArgument("has been close !");
+    }
+    cb_mp_[requestid] = cb;
+    val_lens_[requestid] = nullptr;
+    struct venice_kv* kv = &cmds_[requestid];
+    kv->reqid = requestid;
+    kv->ctxid = aioctx_.ctxid;
+    kv->db = db_;
+    kv->cf_index = column_family->GetID();
+    kv->key = (char*)key.data();
+    kv->key_len = key.size();
+    kv->value = (char*)value.data();
+    kv->value_len = value.size();
+    kv->sync = options.sync ? 1 : 0;
+    kv->aio = 1;
+    kv->fill_cache = options.fill_cache ? 1 : 0;
+    int ret = ioctl(fd_, PUT_KV, kv);
+    if (ret < 0) {
+      req_id_que_.give_back_id(requestid);
+      return Status::IOError(key.data());
+    }
+    return Status::OK();
+  }
+
+  Status KVImpl::DeleteAsync(const WriteOptions& options, const Slice& key,
+                             CallBackPtr* cb) {
+    return this->DeleteAsync(options, default_cf_handle_, key, cb);
+  }
+
+  Status KVImpl::DeleteAsync(const WriteOptions& options,
+                             ColumnFamilyHandle* column_family,
+                             const Slice& key, CallBackPtr* cb) {
+    if (column_family == NULL || cb == NULL) {
+      return Status::InvalidArgument(strerror(errno));
+    }
+    int32_t requestid = req_id_que_.borrow_id();
+    if (requestid < 0) {
+      return Status::InvalidArgument("has been close !");
+    }
+    cb_mp_[requestid] = cb;
+    val_lens_[requestid] = nullptr;
+    struct venice_kv* kv = &cmds_[requestid];
+    kv->reqid = requestid;
+    kv->ctxid = aioctx_.ctxid;
+    kv->db = db_;
+    kv->cf_index = column_family->GetID();
+    kv->key = (char*)key.data();
+    kv->key_len = key.size();
+    kv->sync = options.sync ? 1 : 0;
+    kv->aio = 1;
+    kv->fill_cache = options.fill_cache ? 1 : 0;
+    int ret = ioctl(fd_, DEL_KV, kv);
+    if (ret < 0) {
+      req_id_que_.give_back_id(requestid);
+      if (ENXIO == errno) return Status::NotFound(key.data());
+      return Status::IOError(key.data());
+    }
+    return Status::OK();
+  }
+
+  Status KVImpl::PollCompletion(int32_t* num_events,
+                                const uint64_t timeout_us) {
+    if (num_events == NULL) {
+      return Status::InvalidArgument(strerror(errno));
+    }
+    int timeout = timeout_us / 1000;
+    int nr_changed_fds = epoll_wait(EpollFD_dev, list_of_events_, 1, timeout);
+    if (nr_changed_fds == 0 || nr_changed_fds < 0) {
+      *num_events = 0;
+      return Status::NotFound("not found events");
+    }
+    unsigned long long eftd_ctx = 0;
+    int read_s =
+        read(watch_events_.data.fd, &eftd_ctx, sizeof(unsigned long long));
+    if (read_s != sizeof(unsigned long long)) {
+      // std::cerr << "fail to read from eventfd .." << std::endl;
+      return Status::InvalidArgument("fail to read from eventfd ..\n");
+    }
+
+    while (eftd_ctx) {
+      struct uapi_aioevents aioevents;
+      int check_nr = eftd_ctx;
+      if (check_nr > MAX_AIO_EVENTS) {
+        check_nr = MAX_AIO_EVENTS;
+      }
+      aioevents.nr = check_nr;
+      aioevents.ctxid = aioctx_.ctxid;
+      if (ioctl(fd_, IOCTL_GET_IOEVENTS, &aioevents) < 0) {
+        std::cerr << "NVME_IOCTL_GET_AIOEVENT failed" << std::endl;
+        return Status::InvalidArgument("NVME_IOCTL_GET_AIOEVENT failed\n");
+      }
+      eftd_ctx -= check_nr;
+      *num_events += aioevents.nr;
+      for (int i = 0; i < aioevents.nr; i++) {
+        const struct uapi_aioevent* event = &(aioevents.events[i]);
+        CallBackPtr* cb_pt = cb_mp_[event->reqid];
+        assert(cb_pt != nullptr);
+        struct venice_kv* kv = &cmds_[event->reqid];
+        if (val_lens_[event->reqid] != nullptr) {
+          *val_lens_[event->reqid] = kv->value_len;
+        }
+        if (aioevents.events[i].ret != 0) {
+          cb_pt->call_ptr(Status::InvalidArgument("aio submit error"));
+        } else {
+          cb_pt->call_ptr(Status::OK());
+        }
+        req_id_que_.give_back_id(event->reqid);
+      }
+    }
+    return Status::OK();
+  }
+
+  void KVImpl::SetReqSize(const int32_t& size) {
+    if (cb_mp_.size() == 0) {
+      req_size_ = size;
+    } else {
+      std::cout << "set size error " << std::endl;
+    }
+    return;
+  }
+
+  Status KVImpl::open_aio() {
+    int ret = 0;
+    if (fd_ < 0) {
+      std::cout << "can't open a device : " << device_.c_str() << std::endl;
+      return Status::IOError("can't open a device ");
+    }
+    req_id_que_.init_id_que(req_size_);
+    cb_mp_.resize(req_size_);
+    cmds_.resize(req_size_);
+    val_lens_.resize(req_size_);
+    EpollFD_dev = epoll_create(req_size_);
+    if (EpollFD_dev < 0) {
+      std::cout << "Unable to create Epoll FD; error = " << EpollFD_dev
+                << std::endl;
+      return Status::IOError("Unable to create Epoll FD");
+    }
+    int efd = eventfd(0, EFD_NONBLOCK);
+    if (efd < 0) {
+      std::cout << "fail to create an event." << std::endl;
+      ::close(EpollFD_dev);
+      return Status::IOError("KV_ERR_SYS_IO");
+    }
+    watch_events_.events = EPOLLIN;
+    watch_events_.data.fd = efd;
+    int register_event;
+    register_event = epoll_ctl(EpollFD_dev, EPOLL_CTL_ADD, efd, &watch_events_);
+    if (register_event) {
+      printf("Failed to add FD = %d, to epoll FD = %d, with error code = %d\n",
+             efd, EpollFD_dev, register_event);
+      ::close(EpollFD_dev);
+      ::close(efd);
+      return Status::IOError("KV_ERR_SYS_IO");
+    }
+    aioctx_.ctxid = 0;
+    aioctx_.eventfd = efd;
+    ret = ioctl(fd_, IOCTL_CREATE_AIOCTX, &aioctx_);
+    if (ret < 0) {
+      ::close(EpollFD_dev);
+      ::close(efd);
+      printf("fail to set_aioctx\n");
+      return Status::IOError("KV_ERR_SYS_IO");
+    }
+    return Status::OK();
+  }
+
+  Status KVImpl::close_aio() {
+    if (fd_ > 0 && EpollFD_dev > 0) {
+      int ret = req_id_que_.wait_clear();
+      if (ret != 0) {
+        printf("close with not clear, count = %d\n", ret);
+      }
+      ioctl(fd_, IOCTL_DEL_AIOCTX, &aioctx_);
+      ::close(EpollFD_dev);
+      ::close(aioctx_.eventfd);
+    }
+    return Status::OK();
   }
 
   Env* KVImpl::GetEnv() const {

@@ -167,6 +167,28 @@ class DB {
 
   virtual ColumnFamilyHandle* DefaultColumnFamily() const = 0;
 
+  virtual Status GetAsync(const ReadOptions& options, const Slice& key,
+                          char* val_buf, const int32_t buf_len,
+                          int32_t* val_len, CallBackPtr* cb) = 0;
+  virtual Status GetAsync(const ReadOptions& options,
+                          ColumnFamilyHandle* column_family, const Slice& key,
+                          char* val_buf, const int32_t buf_len,
+                          int32_t* val_len, CallBackPtr* cb) = 0;
+  virtual Status PutAsync(const WriteOptions& options, const Slice& key,
+                          const Slice& value, CallBackPtr* cb) = 0;
+  virtual Status PutAsync(const WriteOptions& options,
+                          ColumnFamilyHandle* column_family, const Slice& key,
+                          const Slice& value, CallBackPtr* cb) = 0;
+  virtual Status DeleteAsync(const WriteOptions& options, const Slice& key,
+                             CallBackPtr* cb) = 0;
+  virtual Status DeleteAsync(const WriteOptions& options,
+                             ColumnFamilyHandle* column_family,
+                             const Slice& key, CallBackPtr* cb) = 0;
+  virtual Status PollCompletion(int32_t* num_events,
+                                const uint64_t timeout_us) = 0;
+
+  virtual void SetReqSize(const int32_t& size) = 0;
+
   static Status ListColumnFamilies(const DBOptions& db_options,
             const std::string& name,
             const std::string& device,

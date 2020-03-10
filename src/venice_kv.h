@@ -82,7 +82,9 @@ struct venice_kv {
 	int value_len;
 	char *key;
 	char *value;
-	char pad[12];
+	int aio;
+	__u32 ctxid;
+	__u32 reqid;
 };
 
 struct uapi_key_status {
@@ -386,6 +388,27 @@ struct uapi_raw_block {
 	char *buf;
 	__u64 *metadatas;
 	__u8 *eccs;
+};
+
+struct uapi_aioctx {
+	__u32 ctxid;
+	__u32 eventfd;
+};
+
+struct uapi_aioevent {
+	__u32 reqid;
+	__u32 ctxid;
+	__u32 ret;
+	__u16 status;
+	__u16 reserved;
+};
+
+#define MAX_AIO_EVENTS 128
+struct uapi_aioevents {
+	__u16 nr;
+	__u16 reserved;
+	__u32 ctxid;
+	struct uapi_aioevent events[MAX_AIO_EVENTS];
 };
 
 #endif /* end of __VENICE_KV__ */
