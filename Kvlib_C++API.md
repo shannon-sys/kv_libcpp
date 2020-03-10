@@ -598,3 +598,75 @@ else {
     return Status::NoSpace("flag2");
 }
 ```
+
+### 7、异步接口使用
+#### 什么是aio
+aio支持以非阻塞的模式进行kv操作，并且通过注册callback的形式调用回调返回操作的结果
+#### aio需要的结构
+##### swift/types.h
+```cpp
+  // 使用异步接口需要实现相关的回调类
+  // 使用回调需要用户继承该类然后重载call_ptr这个入口，就可以实现回调相关操作
+  // 可以将需要使用的相关参数注册到这个类中
+  // 返回之后会调用call_ptr这个接口进行回调处理
+  class CallBackPtr {
+    public:
+      virtual void call_ptr(const shannon::Status &s) = 0;
+  };
+```
+#### aio外部接口
+```cpp
+
+  // 提供异步调用Get接口,使用默认的column_family
+  // 接口参数和同步接口一致，需要提前为val_buf申请内存
+  // cb不允许为空指针
+  virtual Status GetAsync(const ReadOptions& options,
+           const Slice& key,
+           char* val_buf,
+         const int32_t& buf_len,
+                   int32_t * val_len,
+				   CallBackPtr * cb);
+
+  // 提供异步调用Get接口，指定column_family
+  // 需要提前为val_buf申请内存
+  // cb不允许为空指针
+  virtual Status GetAsync(const ReadOptions& options,
+                    ColumnFamilyHandle* column_family,
+                    const Slice& key,
+                    char* val_buf,
+                    const int32_t& buf_len,p
+                    int32_t * val_len,
+                    CallBackPtr * cb) ;
+
+  // 提供异步调用Put接口,使用默认的column_family
+  // cb不允许为空指针
+  virtual Status PutAsync(const WriteOptions&, const Slice& key, const Slice& value,CallBackPtr * cb);
+
+  // 提供异步调用Put接口,指定column_family
+  // cb不允许为空指针
+  virtual Status PutAsync(const WriteOptions& options,
+                    ColumnFamilyHandle* column_family, const Slice& key,
+                    const Slice& value,
+                    CallBackPtr * cb) ;
+
+  // 提供异步Delete调用接口,使用默认的column_family
+  // cb不允许为空指针
+  virtual Status DeleteAsync(const WriteOptions&, const Slice& key, CallBackPtr * cb);
+
+  // 提供异步调用Delete接口,指定column_family
+  // cb不允许为空指针
+  virtual Status DeleteAsync(const WriteOptions& options,
+                    ColumnFamilyHandle* column_family, const Slice& key,
+                    CallBackPtr * cb) ;
+
+  // 通过这个接口调用，处理已经完成的异步调用，并且执行调用callback
+  // 限制一次获取事件的时间和数量
+  // num_events成功时为数量，失败为0，timeout_us为每次最大的等待时间
+  virtual Status PollCompletion (int32_t* num_events, const uint64_t timeout_us);
+
+  // 在openDB之前调用这个接口可以设置缓存之中可以同时容纳的命令的数量
+  // 必须在opendb之前使用
+  virtual void SetReqSize(const int32_t & size);
+
+```
+具体使用可以参考 test/test_aio.cc的代码
