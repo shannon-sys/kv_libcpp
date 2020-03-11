@@ -74,17 +74,24 @@ struct venice_kv {
 	__u64 snapshot_id;
 	int db;
 	int cf_index;
-	int sync;
+	union {
+		int kv_flags; //just occupy memory space, do not use kv_flags
+		struct {
+			int sync : 1;
+			int aio : 1;
+			int reserved1 : (sizeof(int) - 2);
+		};
+	};
 	/* used for kv_get command */
 	int value_buf_size;
 	int fill_cache;
 	int key_len;
 	int value_len;
+	__u16 ctxid;
+	__u16 reqid;
 	char *key;
 	char *value;
-	int aio;
-	__u32 ctxid;
-	__u32 reqid;
+	char pad[16];
 };
 
 struct uapi_key_status {
@@ -391,24 +398,25 @@ struct uapi_raw_block {
 };
 
 struct uapi_aioctx {
-	__u32 ctxid;
+	__u16 ctxid;
+	__u16 reserved;
 	__u32 eventfd;
 };
 
 struct uapi_aioevent {
-	__u32 reqid;
-	__u32 ctxid;
-	__u32 ret;
+	__u16 reqid;
+	__u16 ctxid;
 	__u16 status;
 	__u16 reserved;
+	int ret;
 };
 
 #define MAX_AIO_EVENTS 128
 struct uapi_aioevents {
 	__u16 nr;
-	__u16 reserved;
-	__u32 ctxid;
-	struct uapi_aioevent events[MAX_AIO_EVENTS];
+	__u16 ctxid;
+	__u32 reserved;
+	struct uapi_aioevent events[MAX_AIO_EVENTS]; //TODO: structure too big.
 };
 
 #endif /* end of __VENICE_KV__ */
