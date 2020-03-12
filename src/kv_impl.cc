@@ -786,6 +786,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     struct venice_kv* kv = &cmds_[requestid];
     kv->reqid = requestid;
     kv->ctxid = aioctx_.ctxid;
+    kv->seqnum = aioctx_.seqnum;
     kv->db = db_;
     kv->cf_index = column_family->GetID();
     kv->key = (char*)key.data();
@@ -825,6 +826,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     struct venice_kv* kv = &cmds_[requestid];
     kv->reqid = requestid;
     kv->ctxid = aioctx_.ctxid;
+    kv->seqnum = aioctx_.seqnum;
     kv->db = db_;
     kv->cf_index = column_family->GetID();
     kv->key = (char*)key.data();
@@ -862,6 +864,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     struct venice_kv* kv = &cmds_[requestid];
     kv->reqid = requestid;
     kv->ctxid = aioctx_.ctxid;
+    kv->seqnum = aioctx_.seqnum;
     kv->db = db_;
     kv->cf_index = column_family->GetID();
     kv->key = (char*)key.data();
@@ -905,6 +908,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
       }
       aioevents.nr = check_nr;
       aioevents.ctxid = aioctx_.ctxid;
+      aioevents.seqnum = aioctx_.seqnum;
       if (ioctl(fd_, IOCTL_GET_IOEVENTS, &aioevents) < 0) {
         std::cerr << "NVME_IOCTL_GET_AIOEVENT failed" << std::endl;
         return Status::InvalidArgument("NVME_IOCTL_GET_AIOEVENT failed\n");

@@ -91,7 +91,8 @@ struct venice_kv {
 	__u16 reqid;
 	char *key;
 	char *value;
-	char pad[16];
+	__u32 seqnum;
+	char pad[12];
 };
 
 struct uapi_key_status {
@@ -398,9 +399,10 @@ struct uapi_raw_block {
 };
 
 struct uapi_aioctx {
-	__u16 ctxid;
-	__u16 reserved;
 	__u32 eventfd;
+	__u32 seqnum;
+	__u16 ctxid;
+	char pad[6];
 };
 
 struct uapi_aioevent {
@@ -415,7 +417,7 @@ struct uapi_aioevent {
 struct uapi_aioevents {
 	__u16 nr;
 	__u16 ctxid;
-	__u32 reserved;
+	__u32 seqnum;
 	struct uapi_aioevent events[MAX_AIO_EVENTS]; //TODO: structure too big.
 };
 
