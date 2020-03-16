@@ -111,7 +111,6 @@ class KVImpl : public DB {
   void SetCfOptoions(const Options & options){
             cf_options_ = options;
   }
-  virtual void SetReqSize(const int32_t& size);
  protected:
   Env* const env_;
  private:
@@ -137,14 +136,14 @@ class KVImpl : public DB {
   void operator=(const KVImpl&);
 
   // aio support
-  Status open_aio();
-  Status close_aio();
+  Status OpenAio();
+  Status CloseAio();
   int req_size_;
   std::vector<CallBackPtr*> cb_mp_;
   std::vector<venice_kv> cmds_;
   std::vector<int*> val_lens_;
   ReqIdQue req_id_que_;
-  int EpollFD_dev = -1;
+  int epollfd_dev_ = -1;
   struct epoll_event watch_events_;
   struct epoll_event list_of_events_[1];
   struct uapi_aioctx aioctx_;

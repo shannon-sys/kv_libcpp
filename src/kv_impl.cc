@@ -27,10 +27,11 @@
 #include "table/sst_table.h"
 
 using namespace std;
+#define MAX_AIO_REQ_COUNT 8192
 namespace shannon {
   const std::string kDefaultColumnFamilyName("default");
   KVImpl::~KVImpl() {
-    close_aio();
+    CloseAio();
   }
   KVImpl::KVImpl(const DBOptions& options, const std::string& dbname, const std::string& device)
       :env_(options.env),
@@ -39,7 +40,7 @@ namespace shannon {
        device_(device) {
        default_cf_handle_ = NULL;
        is_default_open_ = false;
-       req_size_ = 8192;
+       req_size_ = MAX_AIO_REQ_COUNT;
     }
 
   Status KVImpl::Open() {
@@ -164,9 +165,9 @@ namespace shannon {
     for (int i = 0; i < (*handles).size(); ++i) {
         (*handles)[i]->SetDescriptor(column_families[i]);
     }
-    s = open_aio();
+    s = OpenAio();
     if (!s.ok()) {
-      return Status::InvalidArgument("open_aio error !\n");
+      return Status::InvalidArgument("OpenAio error !\n");
     }
     return s;
   }
@@ -887,7 +888,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
       return Status::InvalidArgument(strerror(errno));
     }
     int timeout = timeout_us / 1000;
-    int nr_changed_fds = epoll_wait(EpollFD_dev, list_of_events_, 1, timeout);
+    int nr_changed_fds = epoll_wait(epollfd_dev_, list_of_events_, 1, timeout);
     if (nr_changed_fds == 0 || nr_changed_fds < 0) {
       *num_events = 0;
       return Status::NotFound("not found events");
@@ -934,16 +935,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     return Status::OK();
   }
 
-  void KVImpl::SetReqSize(const int32_t& size) {
-    if (cb_mp_.size() == 0) {
-      req_size_ = size;
-    } else {
-      std::cout << "set size error " << std::endl;
-    }
-    return;
-  }
-
-  Status KVImpl::open_aio() {
+  Status KVImpl::OpenAio() {
     int ret = 0;
     if (fd_ < 0) {
       std::cout << "can't open a device : " << device_.c_str() << std::endl;
@@ -953,26 +945,26 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     cb_mp_.resize(req_size_);
     cmds_.resize(req_size_);
     val_lens_.resize(req_size_);
-    EpollFD_dev = epoll_create(req_size_);
-    if (EpollFD_dev < 0) {
-      std::cout << "Unable to create Epoll FD; error = " << EpollFD_dev
+    epollfd_dev_ = epoll_create(req_size_);
+    if (epollfd_dev_ < 0) {
+      std::cout << "Unable to create Epoll FD; error = " << epollfd_dev_
                 << std::endl;
       return Status::IOError("Unable to create Epoll FD");
     }
     int efd = eventfd(0, EFD_NONBLOCK);
     if (efd < 0) {
       std::cout << "fail to create an event." << std::endl;
-      ::close(EpollFD_dev);
+      ::close(epollfd_dev_);
       return Status::IOError("KV_ERR_SYS_IO");
     }
     watch_events_.events = EPOLLIN;
     watch_events_.data.fd = efd;
     int register_event;
-    register_event = epoll_ctl(EpollFD_dev, EPOLL_CTL_ADD, efd, &watch_events_);
+    register_event = epoll_ctl(epollfd_dev_, EPOLL_CTL_ADD, efd, &watch_events_);
     if (register_event) {
       printf("Failed to add FD = %d, to epoll FD = %d, with error code = %d\n",
-             efd, EpollFD_dev, register_event);
-      ::close(EpollFD_dev);
+             efd, epollfd_dev_, register_event);
+      ::close(epollfd_dev_);
       ::close(efd);
       return Status::IOError("KV_ERR_SYS_IO");
     }
@@ -980,7 +972,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     aioctx_.eventfd = efd;
     ret = ioctl(fd_, IOCTL_CREATE_AIOCTX, &aioctx_);
     if (ret < 0) {
-      ::close(EpollFD_dev);
+      ::close(epollfd_dev_);
       ::close(efd);
       printf("fail to set_aioctx\n");
       return Status::IOError("KV_ERR_SYS_IO");
@@ -988,14 +980,14 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     return Status::OK();
   }
 
-  Status KVImpl::close_aio() {
-    if (fd_ > 0 && EpollFD_dev > 0) {
+  Status KVImpl::CloseAio() {
+    if (fd_ > 0 && epollfd_dev_ > 0) {
       int ret = req_id_que_.wait_clear();
       if (ret != 0) {
         printf("close with not clear, count = %d\n", ret);
       }
       ioctl(fd_, IOCTL_DEL_AIOCTX, &aioctx_);
-      ::close(EpollFD_dev);
+      ::close(epollfd_dev_);
       ::close(aioctx_.eventfd);
     }
     return Status::OK();

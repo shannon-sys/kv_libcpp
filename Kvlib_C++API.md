@@ -664,9 +664,5 @@ aio支持以非阻塞的模式进行kv操作，并且通过注册callback的形�
   // num_events成功时为数量，失败为0，timeout_us为每次最大的等待时间
   virtual Status PollCompletion (int32_t* num_events, const uint64_t timeout_us);
 
-  // 在openDB之前调用这个接口可以设置缓存之中可以同时容纳的命令的数量
-  // 必须在opendb之前使用
-  virtual void SetReqSize(const int32_t & size);
-
 ```
 具体使用可以参考 test/test_aio.cc的代码

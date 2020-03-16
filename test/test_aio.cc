@@ -357,6 +357,7 @@ void KV_Outall() {
   is_close = true;
   th1->join();
   usleep(5000000);
+  cout << "delete db" << endl;
   delete db;
 }
 
@@ -387,7 +388,7 @@ int main(int argc, char *argv[]) {
   call_case = 0;
   cmd_cases = 0;
   des_cases = 0;
-  if (argc == 2 && argv[1][0] == '1') {
+  if (argc != 2) {
     cout << "start------- " << endl;
     que_kv.resize(100000);
     KV_Outall();
@@ -439,6 +440,7 @@ int main(int argc, char *argv[]) {
     }
     th1->join();
     que_kv.clear();
+    delete db;
     DestoryDB();
   } else {
     cout << endl
@@ -451,7 +453,6 @@ int main(int argc, char *argv[]) {
          << "    3.delete:         \"del key\"" << endl
          << "    4.exit:           \"exit\"" << endl
          << "    5.iter all data:  \"iter\"" << endl
-         << "1: run auto general test" << endl
          << endl;
   }
 }

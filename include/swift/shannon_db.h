@@ -187,8 +187,6 @@ class DB {
   virtual Status PollCompletion(int32_t* num_events,
                                 const uint64_t timeout_us) = 0;
 
-  virtual void SetReqSize(const int32_t& size) = 0;
-
   static Status ListColumnFamilies(const DBOptions& db_options,
             const std::string& name,
             const std::string& device,
