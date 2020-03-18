@@ -43,12 +43,11 @@ void ReqIdQue::give_back_id(const int32_t reqid) {
 int ReqIdQue::wait_clear() {
   std::unique_lock<std::mutex> lck(req_que_lock_);
   isclose_ = true;
-  while(cond_.wait_for(lck, std::chrono::seconds(3)) != std::cv_status::timeout) {
-    if (reqid_que_free_.size() == size_) {
-      cond_.notify_all();
-      break;
-    }
+  while (reqid_que_free_.size() != size_ &&
+         cond_.wait_for(lck, std::chrono::seconds(3)) !=
+             std::cv_status::timeout) {
   }
+  cond_.notify_all();
   return size_ - reqid_que_free_.size();
 }
 
