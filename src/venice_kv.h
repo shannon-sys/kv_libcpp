@@ -79,7 +79,8 @@ struct venice_kv {
 		struct {
 			int sync : 1;
 			int aio : 1;
-			int reserved1 : (sizeof(int) - 2);
+			int partial: 1;
+			int reserved1 : (sizeof(int) - 3);
 		};
 	};
 	/* used for kv_get command */
@@ -92,7 +93,9 @@ struct venice_kv {
 	char *key;
 	char *value;
 	__u32 seqnum;
-	char pad[12];
+	// for partial read/update only, 4K aligned, in bytes
+	int partial_offset;
+	char pad[8];
 };
 
 struct uapi_key_status {
