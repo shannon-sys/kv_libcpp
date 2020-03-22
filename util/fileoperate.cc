@@ -60,13 +60,12 @@ size_t ReadFile(char *filename, uint64_t offset, uint64_t size, Slice *result)
     goto close_fd;
   }
   while (read_size < size) {
-    tmp_read = read(fd, buf + read_size, size);
+    tmp_read = read(fd, buf + read_size, size - read_size);
     if (tmp_read == -1 || tmp_read == 0) {
       printf("file=%s read failed, %s\n", filename, strerror(errno));
       goto close_fd;
     }
     read_size += tmp_read;
-    size -= tmp_read;
   }
   close(fd);
   *result = Slice((const char *)buf, read_size);
