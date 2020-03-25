@@ -125,8 +125,9 @@ namespace shannon {
     }
     /* open column_family */
     struct uapi_cf_handle cfhandle;
-    cfhandle.db_index = handle.db_index;
     for (auto column_family_descriptor : column_families) {
+        memset(&cfhandle, 0, sizeof(struct uapi_cf_handle));
+        cfhandle.db_index = handle.db_index;
         memcpy(cfhandle.name, column_family_descriptor.name.data(),
                 column_family_descriptor.name.length());
         cfhandle.name[column_family_descriptor.name.length()] = '\0';
@@ -665,6 +666,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     if (handle == NULL) {
         return Status::InvalidArgument(strerror(errno));
     }
+    memset(&cfhandle, 0, sizeof(struct uapi_cf_handle));
     cfhandle.db_index = db_;
     memcpy(cfhandle.name, column_family_name.data(), column_family_name.size());
     cfhandle.name[column_family_name.size()] = '\0';
@@ -728,6 +730,7 @@ Status KVImpl::BuildSstFile(const std::string &dirname, const std::string &filen
     if (column_family == NULL) {
         return Status::InvalidArgument(strerror(errno));
     }
+    memset(&cfhandle, 0, sizeof(struct uapi_cf_handle));
     cfhandle.db_index = db_;
     cfhandle.cf_index = (reinterpret_cast<const ColumnFamilyHandle* >(column_family))
                         ->GetID();

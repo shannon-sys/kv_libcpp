@@ -221,6 +221,8 @@ struct uapi_db_list {
 struct uapi_cf_handle {
 	int db_index;
 	int cf_index;
+	int object_sectors_size; /* example: 512, 4096 */
+	int object_size; /* example: 1M, 2M, 4M */
 	char name[CF_NAME_LEN];
 };
 
